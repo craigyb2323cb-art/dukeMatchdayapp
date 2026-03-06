@@ -13,7 +13,9 @@ export default function App() {
   const [matches, setMatches] = useState([
     "Premier League 17:30 - Sky Sports Main Event (Ch401)",
     "Champions League 20:00 - TNT Sports 1 (Ch410)",
-    "Rugby Six Nations 16:45 - ITV 1 (Ch103)"
+    "FA Cup 19:45 - BBC One (Ch101)",
+    "Six Nations 16:45 - ITV 1 (Ch103)",
+    "Boxing 22:00 - Amazon Prime"
   ]);
 
   function assign(box, match) {
@@ -35,12 +37,64 @@ export default function App() {
     setMatches([
       "Premier League 17:30 - Sky Sports Main Event (Ch401)",
       "Champions League 20:00 - TNT Sports 1 (Ch410)",
-      "Rugby Six Nations 16:45 - ITV 1 (Ch103)"
+      "FA Cup 19:45 - BBC One (Ch101)",
+      "Six Nations 16:45 - ITV 1 (Ch103)",
+      "Boxing 22:00 - Amazon Prime"
     ]);
   }
 
   function openFanzoFixtures() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
+  }
+
+  function getChannelStyle(text) {
+    const item = text.toLowerCase();
+
+    if (item.includes("sky")) {
+      return {
+        background: "#1565c0",
+        borderLeft: "6px solid #42a5f5",
+        color: "white"
+      };
+    }
+
+    if (item.includes("tnt")) {
+      return {
+        background: "#e65100",
+        borderLeft: "6px solid #ffb74d",
+        color: "white"
+      };
+    }
+
+    if (item.includes("bbc")) {
+      return {
+        background: "#6a1b9a",
+        borderLeft: "6px solid #ba68c8",
+        color: "white"
+      };
+    }
+
+    if (item.includes("itv")) {
+      return {
+        background: "#2e7d32",
+        borderLeft: "6px solid #81c784",
+        color: "white"
+      };
+    }
+
+    if (item.includes("amazon")) {
+      return {
+        background: "#212121",
+        borderLeft: "6px solid #fbc02d",
+        color: "white"
+      };
+    }
+
+    return {
+      background: "#1c1c1c",
+      borderLeft: "6px solid #666",
+      color: "white"
+    };
   }
 
   return (
@@ -119,11 +173,10 @@ export default function App() {
               <div
                 key={i}
                 style={{
+                  ...getChannelStyle(match),
                   marginBottom: "16px",
                   padding: "16px",
-                  background: "#1c1c1c",
-                  borderRadius: "12px",
-                  border: "1px solid #2f2f2f"
+                  borderRadius: "12px"
                 }}
               >
                 <div
@@ -181,20 +234,35 @@ export default function App() {
             <h2 style={{ marginBottom: "16px" }}>Sky Box TV Schedule</h2>
 
             <div style={boardGrid}>
-              <div style={boardCard("#1e88e5")}>
+              <div style={{ ...boardCard("#1e88e5"), ...getChannelStyle(boxes.box1) }}>
                 <div style={boardTitle}>📺 SKY BOX 1</div>
                 <div style={boardText}>{boxes.box1}</div>
               </div>
 
-              <div style={boardCard("#fb8c00")}>
+              <div style={{ ...boardCard("#fb8c00"), ...getChannelStyle(boxes.box2) }}>
                 <div style={boardTitle}>📺 SKY BOX 2</div>
                 <div style={boardText}>{boxes.box2}</div>
               </div>
 
-              <div style={boardCard("#43a047")}>
+              <div style={{ ...boardCard("#43a047"), ...getChannelStyle(boxes.box3) }}>
                 <div style={boardTitle}>📺 SKY BOX 3</div>
                 <div style={boardText}>{boxes.box3}</div>
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "24px",
+                display: "flex",
+                gap: "12px",
+                flexWrap: "wrap"
+              }}
+            >
+              <div style={legendStyle("#1565c0")}>Sky</div>
+              <div style={legendStyle("#e65100")}>TNT</div>
+              <div style={legendStyle("#6a1b9a")}>BBC</div>
+              <div style={legendStyle("#2e7d32")}>ITV</div>
+              <div style={legendStyle("#212121")}>Amazon</div>
             </div>
           </div>
         )}
@@ -299,7 +367,6 @@ const boardGrid = {
 };
 
 const boardCard = (color) => ({
-  background: "#1c1c1c",
   borderRadius: "14px",
   padding: "18px",
   borderTop: `6px solid ${color}`,
@@ -317,3 +384,11 @@ const boardText = {
   lineHeight: "1.5",
   color: "#f1f1f1"
 };
+
+const legendStyle = (background) => ({
+  background,
+  color: "white",
+  padding: "10px 14px",
+  borderRadius: "10px",
+  fontWeight: "bold"
+});
