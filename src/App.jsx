@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "./assets/duke-logo.jpg";
+import logo from "./src/assets/IMG_20260306_141840.jpg";
 
 export default function App() {
   const [page, setPage] = useState("fixtures");
