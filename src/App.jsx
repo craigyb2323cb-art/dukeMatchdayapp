@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
 
 const defaultMatches = [
@@ -11,14 +11,13 @@ const defaultMatches = [
 
 export default function App() {
   const [page, setPage] = useState("fixtures");
-
   const [boxes, setBoxes] = useState({
     box1: "No match assigned",
     box2: "No match assigned",
     box3: "No match assigned"
   });
-
   const [matches, setMatches] = useState(defaultMatches);
+  const [copied, setCopied] = useState(false);
 
   function assign(box, match) {
     setBoxes((prev) => ({
@@ -39,6 +38,18 @@ export default function App() {
 
   function openFanzoFixtures() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
+  }
+
+  function openCapCut() {
+    window.open("https://www.capcut.com/", "_blank");
+  }
+
+  function openFacebook() {
+    window.open("https://www.facebook.com/", "_blank");
+  }
+
+  function openInstagram() {
+    window.open("https://www.instagram.com/", "_blank");
   }
 
   function getChannelInfo(text) {
@@ -96,6 +107,108 @@ export default function App() {
     setMatches(pool.slice(3));
   }
 
+  const assignedGames = useMemo(() => {
+    const items = [
+      { box: "Sky Box 1", match: boxes.box1 },
+      { box: "Sky Box 2", match: boxes.box2 },
+      { box: "Sky Box 3", match: boxes.box3 }
+    ].filter((item) => item.match !== "No match assigned");
+
+    return items;
+  }, [boxes]);
+
+  const socialCaption = useMemo(() => {
+    if (assignedGames.length === 0) {
+      return `This week at The Duke Of Devonshire, Eastbourne ⚽🍻
+
+Big night, big match, even bigger atmosphere.
+
+We’re showing live sport all week at:
+155 Terminus Road, Eastbourne, BN21 3NU
+📞 01323 433041
+
+Check our screens in venue for what’s on and when.
+
+#Eastbourne #EastbournePub #LiveSport #SportsBar #TheDukeOfDevonshire`;
+    }
+
+    const fixtureLines = assignedGames
+      .map((item) => `📺 ${item.box}\n${item.match}`)
+      .join("\n\n");
+
+    return `This week at The Duke Of Devonshire, Eastbourne ⚽🍻
+
+Big night, big match, even bigger atmosphere.
+
+${fixtureLines}
+
+Join us at:
+The Duke Of Devonshire
+155 Terminus Road, Eastbourne, BN21 3NU
+📞 01323 433041
+
+#Eastbourne #EastbournePub #EastbourneSport #LiveSport #SportsBar #PremierLeague #ChampionsLeague #SixNations #Boxing #TheDukeOfDevonshire`;
+  }, [assignedGames]);
+
+  async function copyCaption() {
+    try {
+      await navigator.clipboard.writeText(socialCaption);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      alert("Could not copy caption on this device.");
+    }
+  }
+
+  function downloadPoster() {
+    const lines = [
+      "THIS WEEK AT THE DUKE",
+      "",
+      ...assignedGames.flatMap((item) => [item.box, item.match, ""]),
+      "THE DUKE OF DEVONSHIRE",
+      "155 TERMINUS ROAD, EASTBOURNE",
+      "01323 433041"
+    ];
+
+    const svgHeight = 900;
+    const lineHeight = 38;
+    const startY = 120;
+
+    const textSvg = lines
+      .map((line, index) => {
+        const safe = line
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        const weight = index === 0 || line.startsWith("Sky Box") || line.startsWith("THE DUKE")
+          ? "700"
+          : "400";
+        const size = index === 0 ? 34 : line.startsWith("Sky Box") ? 24 : 20;
+        const fill = index === 0 ? "#ffffff" : "#f3f3f3";
+        return `<text x="60" y="${startY + index * lineHeight}" font-family="Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}">${safe}</text>`;
+      })
+      .join("");
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="${svgHeight}">
+        <rect width="100%" height="100%" fill="#111111"/>
+        <rect x="0" y="0" width="1080" height="18" fill="#1e88e5"/>
+        <rect x="40" y="40" width="1000" height="${svgHeight - 80}" rx="24" fill="#1c1c1c" stroke="#2f2f2f" stroke-width="2"/>
+        ${textSvg}
+      </svg>
+    `;
+
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "this-week-at-the-duke.svg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   function ChannelBadge({ text }) {
     const channel = getChannelInfo(text);
 
@@ -121,11 +234,7 @@ export default function App() {
   return (
     <div style={appShell}>
       <div style={heroHeader}>
-        <img
-          src={logo}
-          alt="Duke of Devonshire logo"
-          style={logoStyle}
-        />
+        <img src={logo} alt="Duke of Devonshire logo" style={logoStyle} />
 
         <div style={{ flex: 1 }}>
           <div style={eyebrow}>WELCOME TO</div>
@@ -157,7 +266,6 @@ export default function App() {
             <span style={featureBadge}>Broad Range of Beers</span>
             <span style={featureBadge}>Pub Garden</span>
             <span style={featureBadge}>Heaters & Cover</span>
-            <span style={featureBadge}>Three Regional Real Ales</span>
             <span style={featureBadge}>Food & Drink Deals</span>
           </div>
         </div>
@@ -175,6 +283,10 @@ export default function App() {
 
           <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
             FANZO Planner
+          </button>
+
+          <button onClick={() => setPage("social")} style={tabButton(page === "social")}>
+            Social Media
           </button>
 
           <button onClick={autoAssign} style={autoAssignButton}>
@@ -312,18 +424,92 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {page === "social" && (
+          <div>
+            <h2 style={sectionTitle}>Social Media Preview</h2>
+
+            <div style={socialGrid}>
+              <div style={socialPreviewCard}>
+                <div style={socialPreviewHeader}>
+                  <img src={logo} alt="Duke logo" style={socialPreviewLogo} />
+                  <div>
+                    <div style={socialPreviewEyebrow}>THIS WEEK AT</div>
+                    <div style={socialPreviewTitle}>THE DUKE</div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "18px" }}>
+                  {assignedGames.length === 0 && (
+                    <div style={{ color: "#d0d0d0", fontSize: "18px" }}>
+                      No matches assigned yet.
+                    </div>
+                  )}
+
+                  {assignedGames.map((item, index) => (
+                    <div key={index} style={socialMatchCard}>
+                      <div style={socialBoxTitle}>{item.box}</div>
+                      <div style={socialMatchText}>{item.match}</div>
+                      <ChannelBadge text={item.match} />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={socialFooter}>
+                  155 Terminus Road, Eastbourne • 01323 433041
+                </div>
+              </div>
+
+              <div style={socialToolsCard}>
+                <div style={infoTitle}>Caption Preview</div>
+                <textarea
+                  readOnly
+                  value={socialCaption}
+                  style={captionBox}
+                />
+
+                <div style={buttonRow}>
+                  <button onClick={copyCaption} style={openButton}>
+                    {copied ? "Copied" : "Copy Caption"}
+                  </button>
+
+                  <button onClick={downloadPoster} style={box1Button}>
+                    Download Poster
+                  </button>
+                </div>
+
+                <div style={buttonRow}>
+                  <button onClick={openCapCut} style={box2Button}>
+                    Open CapCut
+                  </button>
+
+                  <button onClick={openFacebook} style={box3Button}>
+                    Open Facebook
+                  </button>
+
+                  <button onClick={openInstagram} style={tabButton(true)}>
+                    Open Instagram
+                  </button>
+                </div>
+
+                <div style={socialTipBox}>
+                  Use <strong>Download Poster</strong> for a quick static graphic, or open
+                  <strong> CapCut</strong> to turn the weekly preview into a Reel or Story.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 const appShell = {
-  background:
-    "linear-gradient(180deg, #0d0d0d 0%, #171717 45%, #111111 100%)",
+  background: "linear-gradient(180deg, #0d0d0d 0%, #171717 45%, #111111 100%)",
   minHeight: "100vh",
   color: "white",
-  fontFamily:
-    "'Arial Black', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+  fontFamily: "'Arial Black', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
 };
 
 const heroHeader = {
@@ -331,8 +517,7 @@ const heroHeader = {
   alignItems: "center",
   gap: "18px",
   padding: "18px 20px",
-  background:
-    "linear-gradient(135deg, #000000 0%, #111111 45%, #1b1b1b 100%)",
+  background: "linear-gradient(135deg, #000000 0%, #111111 45%, #1b1b1b 100%)",
   borderBottom: "3px solid #1e88e5",
   boxShadow: "0 10px 28px rgba(0,0,0,0.28)",
   flexWrap: "wrap"
@@ -596,4 +781,106 @@ const plannerCard = {
   borderRadius: "12px",
   padding: "24px",
   border: "1px solid #333"
+};
+
+const socialGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  gap: "18px"
+};
+
+const socialPreviewCard = {
+  background: "linear-gradient(180deg, #121212 0%, #1d1d1d 100%)",
+  border: "1px solid #333",
+  borderRadius: "18px",
+  padding: "20px",
+  boxShadow: "0 12px 30px rgba(0,0,0,0.28)"
+};
+
+const socialToolsCard = {
+  background: "#1c1c1c",
+  border: "1px solid #333",
+  borderRadius: "18px",
+  padding: "20px",
+  boxShadow: "0 12px 30px rgba(0,0,0,0.28)"
+};
+
+const socialPreviewHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px"
+};
+
+const socialPreviewLogo = {
+  width: "58px",
+  height: "58px",
+  borderRadius: "50%",
+  objectFit: "cover"
+};
+
+const socialPreviewEyebrow = {
+  color: "#bdbdbd",
+  fontSize: "12px",
+  letterSpacing: "2px",
+  fontWeight: "800"
+};
+
+const socialPreviewTitle = {
+  color: "#fff",
+  fontSize: "28px",
+  fontWeight: "900",
+  lineHeight: "1"
+};
+
+const socialMatchCard = {
+  background: "#252525",
+  borderRadius: "12px",
+  padding: "14px",
+  marginBottom: "12px"
+};
+
+const socialBoxTitle = {
+  color: "#64b5f6",
+  fontSize: "13px",
+  fontWeight: "800",
+  marginBottom: "6px",
+  letterSpacing: "1px"
+};
+
+const socialMatchText = {
+  fontSize: "17px",
+  lineHeight: "1.45",
+  fontWeight: "700"
+};
+
+const socialFooter = {
+  marginTop: "18px",
+  color: "#cfcfcf",
+  fontSize: "14px",
+  borderTop: "1px solid #333",
+  paddingTop: "14px"
+};
+
+const captionBox = {
+  width: "100%",
+  minHeight: "280px",
+  background: "#111",
+  color: "#fff",
+  border: "1px solid #333",
+  borderRadius: "12px",
+  padding: "14px",
+  resize: "vertical",
+  fontSize: "15px",
+  lineHeight: "1.5",
+  boxSizing: "border-box"
+};
+
+const socialTipBox = {
+  marginTop: "16px",
+  background: "#171717",
+  border: "1px solid #2d2d2d",
+  borderRadius: "12px",
+  padding: "14px",
+  color: "#d7d7d7",
+  lineHeight: "1.5"
 };
