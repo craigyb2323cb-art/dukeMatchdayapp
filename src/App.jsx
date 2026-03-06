@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
 
+const defaultMatches = [
+  "Premier League 17:30 - Sky Sports Main Event (Ch401)",
+  "Champions League 20:00 - TNT Sports 1 (Ch410)",
+  "FA Cup 19:45 - BBC One (Ch101)",
+  "Six Nations 16:45 - ITV 1 (Ch103)",
+  "Boxing 22:00 - Amazon Prime"
+];
+
 export default function App() {
   const [page, setPage] = useState("fixtures");
 
@@ -10,13 +18,7 @@ export default function App() {
     box3: "No match assigned"
   });
 
-  const [matches, setMatches] = useState([
-    "Premier League 17:30 - Sky Sports Main Event (Ch401)",
-    "Champions League 20:00 - TNT Sports 1 (Ch410)",
-    "FA Cup 19:45 - BBC One (Ch101)",
-    "Six Nations 16:45 - ITV 1 (Ch103)",
-    "Boxing 22:00 - Amazon Prime"
-  ]);
+  const [matches, setMatches] = useState(defaultMatches);
 
   function assign(box, match) {
     setBoxes((prev) => ({
@@ -34,67 +36,89 @@ export default function App() {
       box3: "No match assigned"
     });
 
-    setMatches([
-      "Premier League 17:30 - Sky Sports Main Event (Ch401)",
-      "Champions League 20:00 - TNT Sports 1 (Ch410)",
-      "FA Cup 19:45 - BBC One (Ch101)",
-      "Six Nations 16:45 - ITV 1 (Ch103)",
-      "Boxing 22:00 - Amazon Prime"
-    ]);
+    setMatches(defaultMatches);
   }
 
   function openFanzoFixtures() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
   }
 
-  function getChannelStyle(text) {
+  function getChannelInfo(text) {
     const item = text.toLowerCase();
 
     if (item.includes("sky")) {
-      return {
-        background: "#1565c0",
-        borderLeft: "6px solid #42a5f5",
-        color: "white"
-      };
+      return { label: "SKY", bg: "#1565c0", border: "#42a5f5" };
     }
-
     if (item.includes("tnt")) {
-      return {
-        background: "#e65100",
-        borderLeft: "6px solid #ffb74d",
-        color: "white"
-      };
+      return { label: "TNT", bg: "#e65100", border: "#ffb74d" };
     }
-
     if (item.includes("bbc")) {
-      return {
-        background: "#6a1b9a",
-        borderLeft: "6px solid #ba68c8",
-        color: "white"
-      };
+      return { label: "BBC", bg: "#6a1b9a", border: "#ba68c8" };
     }
-
     if (item.includes("itv")) {
-      return {
-        background: "#2e7d32",
-        borderLeft: "6px solid #81c784",
-        color: "white"
-      };
+      return { label: "ITV", bg: "#2e7d32", border: "#81c784" };
     }
-
     if (item.includes("amazon")) {
-      return {
-        background: "#212121",
-        borderLeft: "6px solid #fbc02d",
-        color: "white"
-      };
+      return { label: "AMAZON", bg: "#212121", border: "#fbc02d" };
     }
 
-    return {
-      background: "#1c1c1c",
-      borderLeft: "6px solid #666",
-      color: "white"
+    return { label: "OTHER", bg: "#424242", border: "#9e9e9e" };
+  }
+
+  function getPopularityScore(match) {
+    const m = match.toLowerCase();
+    let score = 0;
+
+    if (m.includes("premier league")) score += 100;
+    if (m.includes("champions league")) score += 90;
+    if (m.includes("fa cup")) score += 75;
+    if (m.includes("boxing")) score += 70;
+    if (m.includes("six nations")) score += 65;
+
+    if (m.includes("sky sports main event")) score += 20;
+    if (m.includes("tnt")) score += 15;
+    if (m.includes("bbc")) score += 10;
+    if (m.includes("itv")) score += 8;
+    if (m.includes("amazon")) score += 6;
+
+    return score;
+  }
+
+  function autoAssign() {
+    const pool = [...matches].sort(
+      (a, b) => getPopularityScore(b) - getPopularityScore(a)
+    );
+
+    const nextBoxes = {
+      box1: pool[0] || "No match assigned",
+      box2: pool[1] || "No match assigned",
+      box3: pool[2] || "No match assigned"
     };
+
+    setBoxes(nextBoxes);
+    setMatches(pool.slice(3));
+  }
+
+  function ChannelBadge({ text }) {
+    const channel = getChannelInfo(text);
+
+    return (
+      <span
+        style={{
+          display: "inline-block",
+          background: channel.bg,
+          color: "white",
+          padding: "6px 10px",
+          borderRadius: "999px",
+          fontSize: "12px",
+          fontWeight: "bold",
+          letterSpacing: "0.5px",
+          marginTop: "10px"
+        }}
+      >
+        {channel.label}
+      </span>
+    );
   }
 
   return (
@@ -141,6 +165,10 @@ export default function App() {
             Fanzo Fixtures
           </button>
 
+          <button onClick={autoAssign} style={autoAssignButton}>
+            Auto Assign
+          </button>
+
           <button onClick={resetAssignments} style={resetButton}>
             Reset All
           </button>
@@ -169,48 +197,59 @@ export default function App() {
 
             <h3 style={{ marginBottom: "16px" }}>Assign Match To Sky Box</h3>
 
-            {matches.map((match, i) => (
-              <div
-                key={i}
-                style={{
-                  ...getChannelStyle(match),
-                  marginBottom: "16px",
-                  padding: "16px",
-                  borderRadius: "12px"
-                }}
-              >
+            {matches.map((match, i) => {
+              const channel = getChannelInfo(match);
+
+              return (
                 <div
+                  key={i}
                   style={{
-                    marginBottom: "14px",
-                    fontSize: "18px",
-                    fontWeight: "bold",
-                    lineHeight: "1.4"
+                    marginBottom: "16px",
+                    padding: "16px",
+                    background: "#1c1c1c",
+                    borderRadius: "12px",
+                    borderLeft: `6px solid ${channel.border}`,
+                    borderTop: `1px solid ${channel.border}`,
+                    borderRight: "1px solid #2f2f2f",
+                    borderBottom: "1px solid #2f2f2f"
                   }}
                 >
-                  {match}
+                  <div
+                    style={{
+                      marginBottom: "8px",
+                      fontSize: "18px",
+                      fontWeight: "bold",
+                      lineHeight: "1.4"
+                    }}
+                  >
+                    {match}
+                  </div>
+
+                  <ChannelBadge text={match} />
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      flexWrap: "wrap",
+                      marginTop: "14px"
+                    }}
+                  >
+                    <button style={box1Button} onClick={() => assign("box1", match)}>
+                      📺 SKY BOX 1
+                    </button>
+
+                    <button style={box2Button} onClick={() => assign("box2", match)}>
+                      📺 SKY BOX 2
+                    </button>
+
+                    <button style={box3Button} onClick={() => assign("box3", match)}>
+                      📺 SKY BOX 3
+                    </button>
+                  </div>
                 </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <button style={box1Button} onClick={() => assign("box1", match)}>
-                    📺 SKY BOX 1
-                  </button>
-
-                  <button style={box2Button} onClick={() => assign("box2", match)}>
-                    📺 SKY BOX 2
-                  </button>
-
-                  <button style={box3Button} onClick={() => assign("box3", match)}>
-                    📺 SKY BOX 3
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             {matches.length === 0 && (
               <div
@@ -234,20 +273,33 @@ export default function App() {
             <h2 style={{ marginBottom: "16px" }}>Sky Box TV Schedule</h2>
 
             <div style={boardGrid}>
-              <div style={{ ...boardCard("#1e88e5"), ...getChannelStyle(boxes.box1) }}>
-                <div style={boardTitle}>📺 SKY BOX 1</div>
-                <div style={boardText}>{boxes.box1}</div>
-              </div>
+              {[["box1", "📺 SKY BOX 1"], ["box2", "📺 SKY BOX 2"], ["box3", "📺 SKY BOX 3"]].map(
+                ([key, title]) => {
+                  const channel = getChannelInfo(boxes[key]);
 
-              <div style={{ ...boardCard("#fb8c00"), ...getChannelStyle(boxes.box2) }}>
-                <div style={boardTitle}>📺 SKY BOX 2</div>
-                <div style={boardText}>{boxes.box2}</div>
-              </div>
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        background: "#1c1c1c",
+                        borderRadius: "14px",
+                        padding: "18px",
+                        borderTop: `6px solid ${channel.border}`,
+                        minHeight: "180px"
+                      }}
+                    >
+                      <div style={boardTitle}>{title}</div>
+                      <div style={boardText}>{boxes[key]}</div>
 
-              <div style={{ ...boardCard("#43a047"), ...getChannelStyle(boxes.box3) }}>
-                <div style={boardTitle}>📺 SKY BOX 3</div>
-                <div style={boardText}>{boxes.box3}</div>
-              </div>
+                      {boxes[key] !== "No match assigned" && (
+                        <div style={{ marginTop: "12px" }}>
+                          <ChannelBadge text={boxes[key]} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              )}
             </div>
 
             <div
@@ -316,6 +368,17 @@ const resetButton = {
   cursor: "pointer"
 };
 
+const autoAssignButton = {
+  background: "#7b1fa2",
+  color: "white",
+  border: "none",
+  padding: "12px 16px",
+  borderRadius: "10px",
+  fontWeight: "bold",
+  fontSize: "15px",
+  cursor: "pointer"
+};
+
 const openButton = {
   background: "#1e88e5",
   color: "white",
@@ -365,13 +428,6 @@ const boardGrid = {
   gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
   gap: "16px"
 };
-
-const boardCard = (color) => ({
-  borderRadius: "14px",
-  padding: "18px",
-  borderTop: `6px solid ${color}`,
-  minHeight: "160px"
-});
 
 const boardTitle = {
   fontSize: "22px",
