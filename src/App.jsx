@@ -25,7 +25,6 @@ export default function App() {
       ...prev,
       [box]: match
     }));
-
     setMatches((prev) => prev.filter((m) => m !== match));
   }
 
@@ -35,7 +34,6 @@ export default function App() {
       box2: "No match assigned",
       box3: "No match assigned"
     });
-
     setMatches(defaultMatches);
   }
 
@@ -89,13 +87,12 @@ export default function App() {
       (a, b) => getPopularityScore(b) - getPopularityScore(a)
     );
 
-    const nextBoxes = {
+    setBoxes({
       box1: pool[0] || "No match assigned",
       box2: pool[1] || "No match assigned",
       box3: pool[2] || "No match assigned"
-    };
+    });
 
-    setBoxes(nextBoxes);
     setMatches(pool.slice(3));
   }
 
@@ -111,7 +108,7 @@ export default function App() {
           padding: "6px 10px",
           borderRadius: "999px",
           fontSize: "12px",
-          fontWeight: "bold",
+          fontWeight: "800",
           letterSpacing: "0.5px",
           marginTop: "10px"
         }}
@@ -122,37 +119,52 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: "#111", minHeight: "100vh", color: "white" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "15px",
-          padding: "14px 18px",
-          background: "#000",
-          borderBottom: "2px solid #1e88e5"
-        }}
-      >
+    <div style={appShell}>
+      <div style={heroHeader}>
         <img
           src={logo}
           alt="Duke of Devonshire logo"
-          style={{ height: "64px", width: "64px", borderRadius: "50%" }}
+          style={logoStyle}
         />
-        <div>
-          <h2 style={{ margin: 0 }}>Duke of Devonshire Sports TV</h2>
-          <div style={{ color: "#bbb" }}>Eastbourne Match Control</div>
+
+        <div style={{ flex: 1 }}>
+          <div style={eyebrow}>WELCOME TO</div>
+          <h1 style={mainTitle}>The Duke Of Devonshire</h1>
+          <div style={subTitle}>Excellent Value Pub In Eastbourne</div>
+          <div style={heroCopy}>
+            Big nights, big matches and an even bigger atmosphere.
+          </div>
+        </div>
+      </div>
+
+      <div style={topInfoGrid}>
+        <div style={infoCard}>
+          <div style={infoTitle}>Venue</div>
+          <div style={infoText}>155 Terminus Road</div>
+          <div style={infoText}>Eastbourne, East Sussex, BN21 3NU</div>
+          <div style={infoText}>01323 433041</div>
+        </div>
+
+        <div style={infoCard}>
+          <div style={infoTitle}>Opening Hours</div>
+          <div style={infoText}>Mon-Sun: 10:00 - 23:00</div>
+        </div>
+
+        <div style={infoCard}>
+          <div style={infoTitle}>Pub Highlights</div>
+          <div style={badgeWrap}>
+            <span style={featureBadge}>Live Sport</span>
+            <span style={featureBadge}>Broad Range of Beers</span>
+            <span style={featureBadge}>Pub Garden</span>
+            <span style={featureBadge}>Heaters & Cover</span>
+            <span style={featureBadge}>Three Regional Real Ales</span>
+            <span style={featureBadge}>Food & Drink Deals</span>
+          </div>
         </div>
       </div>
 
       <div style={{ padding: "20px" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            flexWrap: "wrap",
-            marginBottom: "20px"
-          }}
-        >
+        <div style={navRow}>
           <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>
             Live Fixtures
           </button>
@@ -162,7 +174,7 @@ export default function App() {
           </button>
 
           <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
-            Fanzo Fixtures
+            FANZO Planner
           </button>
 
           <button onClick={autoAssign} style={autoAssignButton}>
@@ -176,16 +188,9 @@ export default function App() {
 
         {page === "fixtures" && (
           <div>
-            <h2 style={{ marginBottom: "16px" }}>Live Sports (FANZO)</h2>
+            <h2 style={sectionTitle}>Live Sports</h2>
 
-            <div
-              style={{
-                marginBottom: "24px",
-                borderRadius: "12px",
-                overflow: "hidden",
-                border: "1px solid #333"
-              }}
-            >
+            <div style={iframeCard}>
               <iframe
                 src="https://widget.fanzo.com/?id=14245"
                 width="100%"
@@ -195,7 +200,12 @@ export default function App() {
               ></iframe>
             </div>
 
-            <h3 style={{ marginBottom: "16px" }}>Assign Match To Sky Box</h3>
+            <div style={assignIntroCard}>
+              <div style={assignIntroTitle}>Assign matches to screens</div>
+              <div style={assignIntroText}>
+                Put the biggest event on Sky Box 1, then work down to 3.
+              </div>
+            </div>
 
             {matches.map((match, i) => {
               const channel = getChannelInfo(match);
@@ -206,35 +216,20 @@ export default function App() {
                   style={{
                     marginBottom: "16px",
                     padding: "16px",
-                    background: "#1c1c1c",
-                    borderRadius: "12px",
+                    background: "#1b1b1b",
+                    borderRadius: "14px",
                     borderLeft: `6px solid ${channel.border}`,
                     borderTop: `1px solid ${channel.border}`,
-                    borderRight: "1px solid #2f2f2f",
-                    borderBottom: "1px solid #2f2f2f"
+                    borderRight: "1px solid #313131",
+                    borderBottom: "1px solid #313131",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
                   }}
                 >
-                  <div
-                    style={{
-                      marginBottom: "8px",
-                      fontSize: "18px",
-                      fontWeight: "bold",
-                      lineHeight: "1.4"
-                    }}
-                  >
-                    {match}
-                  </div>
+                  <div style={matchTitle}>{match}</div>
 
                   <ChannelBadge text={match} />
 
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "12px",
-                      flexWrap: "wrap",
-                      marginTop: "14px"
-                    }}
-                  >
+                  <div style={buttonRow}>
                     <button style={box1Button} onClick={() => assign("box1", match)}>
                       📺 SKY BOX 1
                     </button>
@@ -252,25 +247,14 @@ export default function App() {
             })}
 
             {matches.length === 0 && (
-              <div
-                style={{
-                  padding: "18px",
-                  background: "#1c1c1c",
-                  borderRadius: "12px",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  border: "1px solid #2f2f2f"
-                }}
-              >
-                ✅ All matches assigned
-              </div>
+              <div style={allAssignedCard}>✅ All matches assigned</div>
             )}
           </div>
         )}
 
         {page === "board" && (
           <div>
-            <h2 style={{ marginBottom: "16px" }}>Sky Box TV Schedule</h2>
+            <h2 style={sectionTitle}>Sky Box TV Schedule</h2>
 
             <div style={boardGrid}>
               {[["box1", "📺 SKY BOX 1"], ["box2", "📺 SKY BOX 2"], ["box3", "📺 SKY BOX 3"]].map(
@@ -282,17 +266,18 @@ export default function App() {
                       key={key}
                       style={{
                         background: "#1c1c1c",
-                        borderRadius: "14px",
-                        padding: "18px",
+                        borderRadius: "16px",
+                        padding: "20px",
                         borderTop: `6px solid ${channel.border}`,
-                        minHeight: "180px"
+                        minHeight: "210px",
+                        boxShadow: "0 10px 28px rgba(0,0,0,0.28)"
                       }}
                     >
                       <div style={boardTitle}>{title}</div>
                       <div style={boardText}>{boxes[key]}</div>
 
                       {boxes[key] !== "No match assigned" && (
-                        <div style={{ marginTop: "12px" }}>
+                        <div style={{ marginTop: "14px" }}>
                           <ChannelBadge text={boxes[key]} />
                         </div>
                       )}
@@ -302,14 +287,7 @@ export default function App() {
               )}
             </div>
 
-            <div
-              style={{
-                marginTop: "24px",
-                display: "flex",
-                gap: "12px",
-                flexWrap: "wrap"
-              }}
-            >
+            <div style={legendRow}>
               <div style={legendStyle("#1565c0")}>Sky</div>
               <div style={legendStyle("#e65100")}>TNT</div>
               <div style={legendStyle("#6a1b9a")}>BBC</div>
@@ -321,17 +299,10 @@ export default function App() {
 
         {page === "fanzo" && (
           <div>
-            <h2 style={{ marginBottom: "16px" }}>Fanzo Fixture Planner</h2>
+            <h2 style={sectionTitle}>FANZO Fixture Planner</h2>
 
-            <div
-              style={{
-                background: "#1c1c1c",
-                borderRadius: "12px",
-                padding: "24px",
-                border: "1px solid #333"
-              }}
-            >
-              <p style={{ fontSize: "18px", marginTop: 0 }}>
+            <div style={plannerCard}>
+              <p style={{ fontSize: "18px", marginTop: 0, color: "#f0f0f0" }}>
                 Open the full FANZO fixture planner in a separate page.
               </p>
 
@@ -346,13 +317,177 @@ export default function App() {
   );
 }
 
+const appShell = {
+  background:
+    "linear-gradient(180deg, #0d0d0d 0%, #171717 45%, #111111 100%)",
+  minHeight: "100vh",
+  color: "white",
+  fontFamily:
+    "'Arial Black', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+};
+
+const heroHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: "18px",
+  padding: "18px 20px",
+  background:
+    "linear-gradient(135deg, #000000 0%, #111111 45%, #1b1b1b 100%)",
+  borderBottom: "3px solid #1e88e5",
+  boxShadow: "0 10px 28px rgba(0,0,0,0.28)",
+  flexWrap: "wrap"
+};
+
+const logoStyle = {
+  height: "72px",
+  width: "72px",
+  borderRadius: "50%",
+  objectFit: "cover",
+  border: "2px solid #2b2b2b"
+};
+
+const eyebrow = {
+  fontSize: "12px",
+  letterSpacing: "2px",
+  color: "#bdbdbd",
+  fontWeight: "800",
+  textTransform: "uppercase"
+};
+
+const mainTitle = {
+  margin: "4px 0",
+  fontSize: "32px",
+  lineHeight: "1.1"
+};
+
+const subTitle = {
+  color: "#e0e0e0",
+  fontSize: "16px",
+  fontWeight: "700",
+  textTransform: "uppercase",
+  letterSpacing: "1px"
+};
+
+const heroCopy = {
+  marginTop: "6px",
+  color: "#b0b0b0",
+  fontSize: "15px"
+};
+
+const topInfoGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: "14px",
+  padding: "18px 20px 0 20px"
+};
+
+const infoCard = {
+  background: "#1a1a1a",
+  border: "1px solid #2f2f2f",
+  borderRadius: "14px",
+  padding: "16px",
+  boxShadow: "0 8px 22px rgba(0,0,0,0.22)"
+};
+
+const infoTitle = {
+  fontSize: "15px",
+  fontWeight: "800",
+  color: "#64b5f6",
+  marginBottom: "10px",
+  textTransform: "uppercase",
+  letterSpacing: "1px"
+};
+
+const infoText = {
+  color: "#ececec",
+  lineHeight: "1.6",
+  fontSize: "15px"
+};
+
+const badgeWrap = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "8px"
+};
+
+const featureBadge = {
+  background: "#252525",
+  color: "#f5f5f5",
+  border: "1px solid #3a3a3a",
+  padding: "8px 10px",
+  borderRadius: "999px",
+  fontSize: "12px",
+  fontWeight: "700"
+};
+
+const navRow = {
+  display: "flex",
+  gap: "10px",
+  flexWrap: "wrap",
+  marginBottom: "20px"
+};
+
+const sectionTitle = {
+  marginBottom: "16px",
+  fontSize: "28px"
+};
+
+const iframeCard = {
+  marginBottom: "24px",
+  borderRadius: "14px",
+  overflow: "hidden",
+  border: "1px solid #333",
+  boxShadow: "0 10px 28px rgba(0,0,0,0.28)"
+};
+
+const assignIntroCard = {
+  background: "#171717",
+  border: "1px solid #2d2d2d",
+  borderRadius: "14px",
+  padding: "16px",
+  marginBottom: "16px"
+};
+
+const assignIntroTitle = {
+  fontWeight: "800",
+  fontSize: "18px",
+  marginBottom: "6px"
+};
+
+const assignIntroText = {
+  color: "#c7c7c7"
+};
+
+const matchTitle = {
+  marginBottom: "8px",
+  fontSize: "18px",
+  fontWeight: "800",
+  lineHeight: "1.4"
+};
+
+const buttonRow = {
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap",
+  marginTop: "14px"
+};
+
+const allAssignedCard = {
+  padding: "18px",
+  background: "#1c1c1c",
+  borderRadius: "12px",
+  fontSize: "18px",
+  fontWeight: "bold",
+  border: "1px solid #2f2f2f"
+};
+
 const tabButton = (active) => ({
   background: active ? "#1e88e5" : "#222",
   color: "white",
   border: "none",
   padding: "12px 16px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "15px",
   cursor: "pointer"
 });
@@ -363,7 +498,7 @@ const resetButton = {
   border: "none",
   padding: "12px 16px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "15px",
   cursor: "pointer"
 };
@@ -374,7 +509,7 @@ const autoAssignButton = {
   border: "none",
   padding: "12px 16px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "15px",
   cursor: "pointer"
 };
@@ -385,7 +520,7 @@ const openButton = {
   border: "none",
   padding: "14px 20px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "16px",
   cursor: "pointer"
 };
@@ -396,7 +531,7 @@ const box1Button = {
   border: "none",
   padding: "14px 18px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "16px",
   cursor: "pointer"
 };
@@ -407,7 +542,7 @@ const box2Button = {
   border: "none",
   padding: "14px 18px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "16px",
   cursor: "pointer"
 };
@@ -418,7 +553,7 @@ const box3Button = {
   border: "none",
   padding: "14px 18px",
   borderRadius: "10px",
-  fontWeight: "bold",
+  fontWeight: "800",
   fontSize: "16px",
   cursor: "pointer"
 };
@@ -431,7 +566,7 @@ const boardGrid = {
 
 const boardTitle = {
   fontSize: "22px",
-  fontWeight: "bold",
+  fontWeight: "800",
   marginBottom: "12px"
 };
 
@@ -441,10 +576,24 @@ const boardText = {
   color: "#f1f1f1"
 };
 
+const legendRow = {
+  marginTop: "24px",
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap"
+};
+
 const legendStyle = (background) => ({
   background,
   color: "white",
   padding: "10px 14px",
   borderRadius: "10px",
-  fontWeight: "bold"
+  fontWeight: "800"
 });
+
+const plannerCard = {
+  background: "#1c1c1c",
+  borderRadius: "12px",
+  padding: "24px",
+  border: "1px solid #333"
+};
