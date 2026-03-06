@@ -72,15 +72,15 @@ export default function App() {
           }}
         >
           <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>
-            Fixtures
-          </button>
-
-          <button onClick={() => setPage("assign")} style={tabButton(page === "assign")}>
-            Assign Matches
+            Live Fixtures
           </button>
 
           <button onClick={() => setPage("board")} style={tabButton(page === "board")}>
             Sky Box Board
+          </button>
+
+          <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
+            Fanzo Fixtures
           </button>
 
           <button onClick={resetAssignments} style={resetButton}>
@@ -90,30 +90,26 @@ export default function App() {
 
         {page === "fixtures" && (
           <div>
-            <h2 style={{ marginBottom: "16px" }}>Fanzo Fixtures</h2>
+            <h2 style={{ marginBottom: "16px" }}>Live Sports (FANZO)</h2>
 
             <div
               style={{
+                marginBottom: "24px",
                 borderRadius: "12px",
                 overflow: "hidden",
-                border: "1px solid #333",
-                background: "#fff"
+                border: "1px solid #333"
               }}
             >
               <iframe
-                src="https://business.fanzo.com/fixtures"
+                src="https://widget.fanzo.com/?id=14245"
                 width="100%"
-                height="700"
-                title="Fanzo fixtures"
-                style={{ border: "none", display: "block" }}
+                height="500"
+                title="Fanzo live sports"
+                style={{ border: "none", display: "block", background: "#fff" }}
               ></iframe>
             </div>
-          </div>
-        )}
 
-        {page === "assign" && (
-          <div>
-            <h2 style={{ marginBottom: "16px" }}>Assign Matches to Sky Boxes</h2>
+            <h3 style={{ marginBottom: "16px" }}>Assign Match To Sky Box</h3>
 
             {matches.map((match, i) => (
               <div
@@ -195,6 +191,29 @@ export default function App() {
                 <div style={boardTitle}>📺 SKY BOX 3</div>
                 <div style={boardText}>{boxes.box3}</div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {page === "fanzo" && (
+          <div>
+            <h2 style={{ marginBottom: "16px" }}>Fanzo Fixture Planner</h2>
+
+            <div
+              style={{
+                borderRadius: "12px",
+                overflow: "hidden",
+                border: "1px solid #333",
+                background: "#fff"
+              }}
+            >
+              <iframe
+                src="https://business.fanzo.com/fixtures"
+                width="100%"
+                height="700"
+                title="Fanzo fixture planner"
+                style={{ border: "none", display: "block" }}
+              ></iframe>
             </div>
           </div>
         )}
