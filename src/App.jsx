@@ -70,3 +70,17 @@ export default function App() {
     </div>
   );
 }
+{page === "fanzo" && (
+<div>
+
+<h2>Fanzo Fixture Planner</h2>
+
+<iframe
+src="https://business.fanzo.com/fixtures"
+width="100%"
+height="600"
+style={{border:"none"}}
+/>
+
+</div>
+)}
