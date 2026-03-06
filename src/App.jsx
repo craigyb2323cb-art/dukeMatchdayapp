@@ -42,7 +42,6 @@ export default function App() {
   return (
     <div style={{ background: "#111", minHeight: "100vh", color: "white" }}>
       <div
-        className="header"
         style={{
           display: "flex",
           alignItems: "center",
@@ -63,7 +62,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="container" style={{ padding: "20px" }}>
+      <div style={{ padding: "20px" }}>
         <div
           style={{
             display: "flex",
@@ -73,15 +72,15 @@ export default function App() {
           }}
         >
           <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>
-            Live Fixtures
+            Fixtures
+          </button>
+
+          <button onClick={() => setPage("assign")} style={tabButton(page === "assign")}>
+            Assign Matches
           </button>
 
           <button onClick={() => setPage("board")} style={tabButton(page === "board")}>
             Sky Box Board
-          </button>
-
-          <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
-            Fanzo Fixtures
           </button>
 
           <button onClick={resetAssignments} style={resetButton}>
@@ -91,29 +90,34 @@ export default function App() {
 
         {page === "fixtures" && (
           <div>
-            <h2 style={{ marginBottom: "16px" }}>Assign Matches to Sky Boxes</h2>
+            <h2 style={{ marginBottom: "16px" }}>Fanzo Fixtures</h2>
 
             <div
               style={{
-                marginBottom: "24px",
                 borderRadius: "12px",
                 overflow: "hidden",
-                border: "1px solid #333"
+                border: "1px solid #333",
+                background: "#fff"
               }}
             >
               <iframe
-                src="https://widget.fanzo.com/?id=14245"
+                src="https://business.fanzo.com/fixtures"
                 width="100%"
-                height="500"
-                title="Fanzo live sports"
-                style={{ border: "none", display: "block", background: "#fff" }}
+                height="700"
+                title="Fanzo fixtures"
+                style={{ border: "none", display: "block" }}
               ></iframe>
             </div>
+          </div>
+        )}
+
+        {page === "assign" && (
+          <div>
+            <h2 style={{ marginBottom: "16px" }}>Assign Matches to Sky Boxes</h2>
 
             {matches.map((match, i) => (
               <div
                 key={i}
-                className="match"
                 style={{
                   marginBottom: "16px",
                   padding: "16px",
@@ -191,28 +195,6 @@ export default function App() {
                 <div style={boardTitle}>📺 SKY BOX 3</div>
                 <div style={boardText}>{boxes.box3}</div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {page === "fanzo" && (
-          <div>
-            <h2 style={{ marginBottom: "16px" }}>Fanzo Fixture Planner</h2>
-
-            <div
-              style={{
-                borderRadius: "12px",
-                overflow: "hidden",
-                border: "1px solid #333"
-              }}
-            >
-              <iframe
-                src="https://business.fanzo.com/fixtures"
-                width="100%"
-                height="700"
-                title="Fanzo fixture planner"
-                style={{ border: "none", display: "block", background: "#fff" }}
-              ></iframe>
             </div>
           </div>
         )}
