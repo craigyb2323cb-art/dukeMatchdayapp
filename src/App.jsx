@@ -3,6 +3,7 @@ import logo from "./assets/IMG_20260306_141840.jpg";
 
 export default function App() {
   const [page, setPage] = useState("fixtures");
+
   const [boxes, setBoxes] = useState({
     box1: "No match assigned",
     box2: "No match assigned",
@@ -32,15 +33,18 @@ export default function App() {
       <div className="container">
         <button onClick={() => setPage("fixtures")}>Live Fixtures</button>
         <button onClick={() => setPage("board")}>Sky Box Board</button>
+        <button onClick={() => setPage("fanzo")}>Fanzo Fixtures</button>
 
         {page === "fixtures" && (
           <div>
             <h2>Live Sports (FANZO)</h2>
+
             <iframe
               src="https://widget.fanzo.com/?id=14245"
               width="100%"
               height="500"
               title="Fanzo live sports"
+              style={{ border: "none" }}
             ></iframe>
 
             <h3>Assign Match To Sky Box</h3>
@@ -61,26 +65,27 @@ export default function App() {
         {page === "board" && (
           <div className="board">
             <h2>Sky Box TV Schedule</h2>
+
             <p>📺 Sky Box 1: {boxes.box1}</p>
             <p>📺 Sky Box 2: {boxes.box2}</p>
             <p>📺 Sky Box 3: {boxes.box3}</p>
+          </div>
+        )}
+
+        {page === "fanzo" && (
+          <div>
+            <h2>Fanzo Fixture Planner</h2>
+
+            <iframe
+              src="https://business.fanzo.com/fixtures"
+              width="100%"
+              height="600"
+              title="Fanzo fixture planner"
+              style={{ border: "none" }}
+            ></iframe>
           </div>
         )}
       </div>
     </div>
   );
 }
-{page === "fanzo" && (
-<div>
-
-<h2>Fanzo Fixture Planner</h2>
-
-<iframe
-src="https://business.fanzo.com/fixtures"
-width="100%"
-height="600"
-style={{border:"none"}}
-/>
-
-</div>
-)}
