@@ -39,6 +39,10 @@ export default function App() {
     ]);
   }
 
+  function openFanzoFixtures() {
+    window.open("https://business.fanzo.com/fixtures", "_blank");
+  }
+
   return (
     <div style={{ background: "#111", minHeight: "100vh", color: "white" }}>
       <div
@@ -201,19 +205,19 @@ export default function App() {
 
             <div
               style={{
+                background: "#1c1c1c",
                 borderRadius: "12px",
-                overflow: "hidden",
-                border: "1px solid #333",
-                background: "#fff"
+                padding: "24px",
+                border: "1px solid #333"
               }}
             >
-              <iframe
-                src="https://business.fanzo.com/fixtures"
-                width="100%"
-                height="700"
-                title="Fanzo fixture planner"
-                style={{ border: "none", display: "block" }}
-              ></iframe>
+              <p style={{ fontSize: "18px", marginTop: 0 }}>
+                Open the full FANZO fixture planner in a separate page.
+              </p>
+
+              <button onClick={openFanzoFixtures} style={openButton}>
+                Open FANZO Fixtures
+              </button>
             </div>
           </div>
         )}
@@ -241,6 +245,17 @@ const resetButton = {
   borderRadius: "10px",
   fontWeight: "bold",
   fontSize: "15px",
+  cursor: "pointer"
+};
+
+const openButton = {
+  background: "#1e88e5",
+  color: "white",
+  border: "none",
+  padding: "14px 20px",
+  borderRadius: "10px",
+  fontWeight: "bold",
+  fontSize: "16px",
   cursor: "pointer"
 };
 
