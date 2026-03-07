@@ -2,6 +2,36 @@ import React, { useEffect, useMemo, useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
 
 const STORAGE_KEY = "duke-auto-fixtures-v1";
+const OPENING_HOURS = {
+  0: { open: "12:00", close: "23:30" }, // Sunday
+  1: { open: "12:00", close: "23:30" }, // Monday
+  2: { open: "12:00", close: "23:30" }, // Tuesday
+  3: { open: "12:00", close: "23:30" }, // Wednesday
+  4: { open: "12:00", close: "23:30" }, // Thursday
+  5: { open: "12:00", close: "00:30" }, // Friday
+  6: { open: "12:00", close: "00:30" }  // Saturday
+};
+function isWithinOpeningHours(fixture) {
+  if (!fixture.time || !fixture.date) return true;
+
+  const date = new Date(fixture.date);
+  const day = date.getDay();
+
+  const hours = OPENING_HOURS[day];
+
+  if (!hours) return true;
+
+  const [matchHour, matchMinute] = fixture.time.split(":").map(Number);
+  const [openHour, openMinute] = hours.open.split(":").map(Number);
+  const [closeHour, closeMinute] = hours.close.split(":").map(Number);
+
+  const matchMinutes = matchHour * 60 + matchMinute;
+  const openMinutes = openHour * 60 + openMinute;
+  const closeMinutes = closeHour * 60 + closeMinute;
+
+  return matchMinutes >= openMinutes && matchMinutes <= closeMinutes;
+}
+
 
 export default function App() {
   const [page, setPage] = useState("fixtures");
