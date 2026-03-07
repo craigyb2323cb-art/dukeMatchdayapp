@@ -19,8 +19,12 @@ export default function App() {
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setSchedule(parsed.schedule || { box1: [], box2: [], box3: [] });
+      try {
+        const parsed = JSON.parse(saved);
+        setSchedule(parsed.schedule || { box1: [], box2: [], box3: [] });
+      } catch {
+        // ignore bad saved data
+      }
     }
   }, []);
 
@@ -48,7 +52,7 @@ export default function App() {
       }
 
       const data = await response.json();
-      setFixtures(data.fixtures || []);
+      setFixtures(Array.isArray(data.fixtures) ? data.fixtures : []);
     } catch (err) {
       setError("Unable to load automatic fixtures right now.");
     } finally {
@@ -57,7 +61,7 @@ export default function App() {
   }
 
   function getChannelInfo(codeOrText) {
-    const text = String(codeOrText).toLowerCase();
+    const text = String(codeOrText || "").toLowerCase();
 
     if (text.includes("sky")) return { label: "SKY", bg: "#1565c0", border: "#42a5f5" };
     if (text.includes("tnt")) return { label: "TNT", bg: "#e65100", border: "#ffb74d" };
@@ -69,7 +73,7 @@ export default function App() {
   }
 
   function getSportColour(sport) {
-    const value = String(sport).toLowerCase();
+    const value = String(sport || "").toLowerCase();
     if (value === "football") return "#1e88e5";
     if (value === "rugby") return "#2e7d32";
     if (value === "darts") return "#8e24aa";
@@ -78,7 +82,10 @@ export default function App() {
   }
 
   function formatDate(dateString) {
-    const date = new Date(dateString + "T12:00:00");
+    if (!dateString) return "";
+    const date = new Date(`${dateString}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return dateString;
+
     return date.toLocaleDateString("en-GB", {
       weekday: "short",
       day: "numeric",
@@ -98,7 +105,7 @@ export default function App() {
     setSchedule((prev) => ({
       ...prev,
       [boxKey]: [...prev[boxKey], fixture].sort((a, b) =>
-        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
+        `${a.date || ""} ${a.time || ""}`.localeCompare(`${b.date || ""} ${b.time || ""}`)
       )
     }));
   }
@@ -135,7 +142,7 @@ export default function App() {
     if (sportFilter === "all") return unassignedOnly;
 
     return unassignedOnly.filter(
-      (fixture) => String(fixture.sport).toLowerCase() === sportFilter
+      (fixture) => String(fixture.sport || "").toLowerCase() === sportFilter
     );
   }, [fixtures, sportFilter, schedule]);
 
@@ -334,9 +341,11 @@ function FixtureCard({ fixture, getChannelInfo, getSportColour, formatDate, onAs
       <div style={fixtureCardHeader}>
         <div>
           <div style={fixtureSport}>
-            {String(fixture.sport).toUpperCase()} • {fixture.source}
+            {String(fixture.sport || "").toUpperCase()} • {fixture.source}
           </div>
-          <div style={fixtureDate}>{formatDate(fixture.date)} • {fixture.time}</div>
+          <div style={fixtureDate}>
+            {formatDate(fixture.date)}{fixture.date ? " • " : ""}{fixture.time}
+          </div>
           <div style={fixtureTitle}>{fixture.title}</div>
           <div style={fixtureMeta}>{fixture.channel}</div>
         </div>
@@ -400,9 +409,11 @@ function SkyBoxLane({ title, accent, fixtures, getChannelInfo, getSportColour, f
             }}
           >
             <div style={laneFixtureSport}>
-              {String(fixture.sport).toUpperCase()} • {fixture.source}
+              {String(fixture.sport || "").toUpperCase()} • {fixture.source}
             </div>
-            <div style={laneFixtureDate}>{formatDate(fixture.date)} • {fixture.time}</div>
+            <div style={laneFixtureDate}>
+              {formatDate(fixture.date)}{fixture.date ? " • " : ""}{fixture.time}
+            </div>
             <div style={laneFixtureTitle}>{fixture.title}</div>
             <div style={laneFixtureChannel}>{fixture.channel}</div>
 
