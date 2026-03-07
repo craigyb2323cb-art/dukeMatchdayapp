@@ -1,17 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
-import fixturesData from "./fixtures.json";
 
-const STORAGE_KEY = "duke-matchday-state-v5";
+const STORAGE_KEY = "duke-auto-fixtures-v1";
 
 export default function App() {
-  const [page, setPage] = useState("planner");
-  const [fixtureMode, setFixtureMode] = useState("weekday");
-
-  const [unassigned, setUnassigned] = useState({
-    weekday: fixturesData.weekday || [],
-    weekend: fixturesData.weekend || []
-  });
+  const [page, setPage] = useState("fixtures");
+  const [sportFilter, setSportFilter] = useState("all");
+  const [fixtures, setFixtures] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [schedule, setSchedule] = useState({
     box1: [],
@@ -23,14 +20,6 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      setPage(parsed.page || "planner");
-      setFixtureMode(parsed.fixtureMode || "weekday");
-      setUnassigned(
-        parsed.unassigned || {
-          weekday: fixturesData.weekday || [],
-          weekend: fixturesData.weekend || []
-        }
-      );
       setSchedule(parsed.schedule || { box1: [], box2: [], box3: [] });
     }
   }, []);
@@ -39,13 +28,33 @@ export default function App() {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        page,
-        fixtureMode,
-        unassigned,
         schedule
       })
     );
-  }, [page, fixtureMode, unassigned, schedule]);
+  }, [schedule]);
+
+  useEffect(() => {
+    loadFixtures();
+  }, []);
+
+  async function loadFixtures() {
+    try {
+      setLoading(true);
+      setError("");
+      const response = await fetch("/api/fixtures");
+
+      if (!response.ok) {
+        throw new Error("Could not load fixtures");
+      }
+
+      const data = await response.json();
+      setFixtures(data.fixtures || []);
+    } catch (err) {
+      setError("Unable to load automatic fixtures right now.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function getChannelInfo(codeOrText) {
     const text = String(codeOrText).toLowerCase();
@@ -59,6 +68,15 @@ export default function App() {
     return { label: "OTHER", bg: "#424242", border: "#9e9e9e" };
   }
 
+  function getSportColour(sport) {
+    const value = String(sport).toLowerCase();
+    if (value === "football") return "#1e88e5";
+    if (value === "rugby") return "#2e7d32";
+    if (value === "darts") return "#8e24aa";
+    if (value === "f1") return "#c62828";
+    return "#666";
+  }
+
   function formatDate(dateString) {
     const date = new Date(dateString + "T12:00:00");
     return date.toLocaleDateString("en-GB", {
@@ -68,58 +86,38 @@ export default function App() {
     });
   }
 
+  function isAssigned(fixtureId) {
+    return ["box1", "box2", "box3"].some((boxKey) =>
+      schedule[boxKey].some((item) => item.id === fixtureId)
+    );
+  }
+
   function assignFixture(boxKey, fixture) {
+    if (isAssigned(fixture.id)) return;
+
     setSchedule((prev) => ({
       ...prev,
       [boxKey]: [...prev[boxKey], fixture].sort((a, b) =>
         `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
       )
     }));
-
-    setUnassigned((prev) => ({
-      ...prev,
-      [fixture.dayType]: prev[fixture.dayType].filter((f) => f.id !== fixture.id)
-    }));
   }
 
   function removeFromBox(boxKey, fixture) {
     setSchedule((prev) => ({
       ...prev,
-      [boxKey]: prev[boxKey].filter((f) => f.id !== fixture.id)
-    }));
-
-    setUnassigned((prev) => ({
-      ...prev,
-      [fixture.dayType]: [...prev[fixture.dayType], fixture].sort((a, b) =>
-        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
-      )
+      [boxKey]: prev[boxKey].filter((item) => item.id !== fixture.id)
     }));
   }
 
   function clearBox(boxKey) {
-    const fixturesToReturn = schedule[boxKey];
-
     setSchedule((prev) => ({
       ...prev,
       [boxKey]: []
     }));
-
-    setUnassigned((prev) => {
-      const next = { ...prev };
-      fixturesToReturn.forEach((fixture) => {
-        next[fixture.dayType] = [...next[fixture.dayType], fixture].sort((a, b) =>
-          `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
-        );
-      });
-      return next;
-    });
   }
 
   function resetAll() {
-    setUnassigned({
-      weekday: fixturesData.weekday || [],
-      weekend: fixturesData.weekend || []
-    });
     setSchedule({
       box1: [],
       box2: [],
@@ -127,38 +125,19 @@ export default function App() {
     });
   }
 
-  function autoAssignDay(dayType) {
-    const fixtures = [...unassigned[dayType]].sort((a, b) =>
-      `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
-    );
-
-    const nextSchedule = {
-      box1: [...schedule.box1],
-      box2: [...schedule.box2],
-      box3: [...schedule.box3]
-    };
-
-    fixtures.forEach((fixture, index) => {
-      const target = index % 3 === 0 ? "box1" : index % 3 === 1 ? "box2" : "box3";
-      nextSchedule[target].push(fixture);
-    });
-
-    nextSchedule.box1.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-    nextSchedule.box2.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-    nextSchedule.box3.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-
-    setSchedule(nextSchedule);
-    setUnassigned((prev) => ({
-      ...prev,
-      [dayType]: []
-    }));
-  }
-
   function openFanzoFixtures() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
   }
 
-  const currentFixtures = useMemo(() => unassigned[fixtureMode], [unassigned, fixtureMode]);
+  const filteredFixtures = useMemo(() => {
+    const unassignedOnly = fixtures.filter((fixture) => !isAssigned(fixture.id));
+
+    if (sportFilter === "all") return unassignedOnly;
+
+    return unassignedOnly.filter(
+      (fixture) => String(fixture.sport).toLowerCase() === sportFilter
+    );
+  }, [fixtures, sportFilter, schedule]);
 
   return (
     <div style={appShell}>
@@ -166,16 +145,19 @@ export default function App() {
         <img src={logo} alt="Duke of Devonshire logo" style={logoStyle} />
         <div>
           <div style={eyebrow}>DUKE OF DEVONSHIRE</div>
-          <h1 style={mainTitle}>Sky Box Assignment Planner</h1>
-          <div style={subTitle}>Plan the full day across all 3 screens</div>
+          <h1 style={mainTitle}>Automatic Fixture Planner</h1>
+          <div style={subTitle}>Auto cards + full day Sky Box assignment</div>
         </div>
       </div>
 
       <div style={{ padding: "20px" }}>
         <div style={topBar}>
           <div style={navRow}>
-            <button onClick={() => setPage("planner")} style={tabButton(page === "planner")}>
-              Planner
+            <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>
+              Auto Fixtures
+            </button>
+            <button onClick={() => setPage("showing")} style={tabButton(page === "showing")}>
+              Showing At The Duke
             </button>
             <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
               FANZO Planner
@@ -183,80 +165,139 @@ export default function App() {
           </div>
 
           <div style={navRow}>
-            <button onClick={() => setFixtureMode("weekday")} style={modeButton(fixtureMode === "weekday")}>
-              Weekday
+            <button onClick={() => setSportFilter("all")} style={modeButton(sportFilter === "all")}>
+              All
             </button>
-            <button onClick={() => setFixtureMode("weekend")} style={modeButton(fixtureMode === "weekend")}>
-              Weekend
+            <button onClick={() => setSportFilter("football")} style={modeButton(sportFilter === "football")}>
+              Football
             </button>
-            <button onClick={() => autoAssignDay(fixtureMode)} style={autoAssignButton}>
-              Auto Assign
+            <button onClick={() => setSportFilter("rugby")} style={modeButton(sportFilter === "rugby")}>
+              Rugby
+            </button>
+            <button onClick={() => setSportFilter("darts")} style={modeButton(sportFilter === "darts")}>
+              Darts
+            </button>
+            <button onClick={() => setSportFilter("f1")} style={modeButton(sportFilter === "f1")}>
+              F1
+            </button>
+            <button onClick={loadFixtures} style={refreshButton}>
+              Refresh Feed
             </button>
             <button onClick={resetAll} style={resetButton}>
-              Reset All
+              Reset Boxes
             </button>
           </div>
         </div>
 
-        {page === "planner" && (
+        {page === "fixtures" && (
           <>
             <div style={plannerIntro}>
-              <div style={plannerIntroTitle}>Unassigned Fixtures</div>
+              <div style={plannerIntroTitle}>Automatic Fixture Cards</div>
               <div style={plannerIntroText}>
-                Update <strong>fixtures.json</strong> to match what FANZO is showing, then assign each match to Sky Box 1, 2 or 3.
+                Pulls from your backend feed, then lets staff assign each event to a Sky Box.
               </div>
             </div>
 
-            <div style={layoutGrid}>
-              <div style={leftColumn}>
-                {currentFixtures.length === 0 && (
-                  <div style={emptyCard}>✅ No unassigned {fixtureMode} fixtures left</div>
-                )}
+            {loading && <div style={emptyCard}>Loading fixtures…</div>}
+            {error && <div style={errorCard}>{error}</div>}
 
-                {currentFixtures.map((fixture) => (
-                  <FixtureCard
-                    key={fixture.id}
-                    fixture={fixture}
+            {!loading && !error && (
+              <div style={layoutGrid}>
+                <div style={leftColumn}>
+                  {filteredFixtures.length === 0 && (
+                    <div style={emptyCard}>No fixtures available in this filter</div>
+                  )}
+
+                  {filteredFixtures.map((fixture) => (
+                    <FixtureCard
+                      key={fixture.id}
+                      fixture={fixture}
+                      getChannelInfo={getChannelInfo}
+                      getSportColour={getSportColour}
+                      formatDate={formatDate}
+                      onAssign={assignFixture}
+                    />
+                  ))}
+                </div>
+
+                <div style={rightColumn}>
+                  <SkyBoxLane
+                    title="📺 SKY BOX 1"
+                    accent="#1e88e5"
+                    fixtures={schedule.box1}
                     getChannelInfo={getChannelInfo}
+                    getSportColour={getSportColour}
                     formatDate={formatDate}
-                    onAssign={assignFixture}
+                    onRemove={(fixture) => removeFromBox("box1", fixture)}
+                    onClear={() => clearBox("box1")}
                   />
-                ))}
+
+                  <SkyBoxLane
+                    title="📺 SKY BOX 2"
+                    accent="#fb8c00"
+                    fixtures={schedule.box2}
+                    getChannelInfo={getChannelInfo}
+                    getSportColour={getSportColour}
+                    formatDate={formatDate}
+                    onRemove={(fixture) => removeFromBox("box2", fixture)}
+                    onClear={() => clearBox("box2")}
+                  />
+
+                  <SkyBoxLane
+                    title="📺 SKY BOX 3"
+                    accent="#43a047"
+                    fixtures={schedule.box3}
+                    getChannelInfo={getChannelInfo}
+                    getSportColour={getSportColour}
+                    formatDate={formatDate}
+                    onRemove={(fixture) => removeFromBox("box3", fixture)}
+                    onClear={() => clearBox("box3")}
+                  />
+                </div>
               </div>
-
-              <div style={rightColumn}>
-                <SkyBoxLane
-                  title="📺 SKY BOX 1"
-                  accent="#1e88e5"
-                  fixtures={schedule.box1}
-                  getChannelInfo={getChannelInfo}
-                  formatDate={formatDate}
-                  onRemove={(fixture) => removeFromBox("box1", fixture)}
-                  onClear={() => clearBox("box1")}
-                />
-
-                <SkyBoxLane
-                  title="📺 SKY BOX 2"
-                  accent="#fb8c00"
-                  fixtures={schedule.box2}
-                  getChannelInfo={getChannelInfo}
-                  formatDate={formatDate}
-                  onRemove={(fixture) => removeFromBox("box2", fixture)}
-                  onClear={() => clearBox("box2")}
-                />
-
-                <SkyBoxLane
-                  title="📺 SKY BOX 3"
-                  accent="#43a047"
-                  fixtures={schedule.box3}
-                  getChannelInfo={getChannelInfo}
-                  formatDate={formatDate}
-                  onRemove={(fixture) => removeFromBox("box3", fixture)}
-                  onClear={() => clearBox("box3")}
-                />
-              </div>
-            </div>
+            )}
           </>
+        )}
+
+        {page === "showing" && (
+          <div>
+            <h2 style={{ marginTop: 0 }}>Showing At The Duke</h2>
+
+            <div style={showingGrid}>
+              <SkyBoxLane
+                title="📺 SKY BOX 1"
+                accent="#1e88e5"
+                fixtures={schedule.box1}
+                getChannelInfo={getChannelInfo}
+                getSportColour={getSportColour}
+                formatDate={formatDate}
+                onRemove={(fixture) => removeFromBox("box1", fixture)}
+                onClear={() => clearBox("box1")}
+              />
+
+              <SkyBoxLane
+                title="📺 SKY BOX 2"
+                accent="#fb8c00"
+                fixtures={schedule.box2}
+                getChannelInfo={getChannelInfo}
+                getSportColour={getSportColour}
+                formatDate={formatDate}
+                onRemove={(fixture) => removeFromBox("box2", fixture)}
+                onClear={() => clearBox("box2")}
+              />
+
+              <SkyBoxLane
+                title="📺 SKY BOX 3"
+                accent="#43a047"
+                fixtures={schedule.box3}
+                getChannelInfo={getChannelInfo}
+                getSportColour={getSportColour}
+                formatDate={formatDate}
+                onRemove={(fixture) => removeFromBox("box3", fixture)}
+                onClear={() => clearBox("box3")}
+              />
+            </div>
+          </div>
         )}
 
         {page === "fanzo" && (
@@ -275,7 +316,7 @@ export default function App() {
   );
 }
 
-function FixtureCard({ fixture, getChannelInfo, formatDate, onAssign }) {
+function FixtureCard({ fixture, getChannelInfo, getSportColour, formatDate, onAssign }) {
   const channel = getChannelInfo(fixture.code);
 
   return (
@@ -285,16 +326,19 @@ function FixtureCard({ fixture, getChannelInfo, formatDate, onAssign }) {
         borderRadius: "16px",
         padding: "16px",
         marginBottom: "16px",
-        borderLeft: `6px solid ${channel.border}`,
+        borderLeft: `6px solid ${getSportColour(fixture.sport)}`,
         border: "1px solid #313131",
         boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
       }}
     >
       <div style={fixtureCardHeader}>
         <div>
+          <div style={fixtureSport}>
+            {String(fixture.sport).toUpperCase()} • {fixture.source}
+          </div>
           <div style={fixtureDate}>{formatDate(fixture.date)} • {fixture.time}</div>
           <div style={fixtureTitle}>{fixture.title}</div>
-          <div style={fixtureChannelText}>{fixture.channel}</div>
+          <div style={fixtureMeta}>{fixture.channel}</div>
         </div>
 
         <div style={channelWrap}>
@@ -319,7 +363,7 @@ function FixtureCard({ fixture, getChannelInfo, formatDate, onAssign }) {
   );
 }
 
-function SkyBoxLane({ title, accent, fixtures, getChannelInfo, formatDate, onRemove, onClear }) {
+function SkyBoxLane({ title, accent, fixtures, getChannelInfo, getSportColour, formatDate, onRemove, onClear }) {
   return (
     <div
       style={{
@@ -352,9 +396,12 @@ function SkyBoxLane({ title, accent, fixtures, getChannelInfo, formatDate, onRem
               padding: "14px",
               borderRadius: "14px",
               background: "#252525",
-              borderLeft: `5px solid ${channel.border}`
+              borderLeft: `5px solid ${getSportColour(fixture.sport)}`
             }}
           >
+            <div style={laneFixtureSport}>
+              {String(fixture.sport).toUpperCase()} • {fixture.source}
+            </div>
             <div style={laneFixtureDate}>{formatDate(fixture.date)} • {fixture.time}</div>
             <div style={laneFixtureTitle}>{fixture.title}</div>
             <div style={laneFixtureChannel}>{fixture.channel}</div>
@@ -456,7 +503,7 @@ const modeButton = (active) => ({
   cursor: "pointer"
 });
 
-const autoAssignButton = {
+const refreshButton = {
   background: "#7b1fa2",
   color: "white",
   border: "none",
@@ -502,6 +549,12 @@ const layoutGrid = {
   gap: "20px"
 };
 
+const showingGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  gap: "16px"
+};
+
 const leftColumn = {
   minWidth: 0
 };
@@ -521,12 +574,30 @@ const emptyCard = {
   border: "1px solid #2f2f2f"
 };
 
+const errorCard = {
+  padding: "18px",
+  background: "#3a1212",
+  borderRadius: "12px",
+  fontSize: "18px",
+  fontWeight: "bold",
+  border: "1px solid #7a2525",
+  marginBottom: "18px"
+};
+
 const fixtureCardHeader = {
   display: "flex",
   justifyContent: "space-between",
   gap: "12px",
   flexWrap: "wrap",
   alignItems: "flex-start"
+};
+
+const fixtureSport = {
+  color: "#c0c0c0",
+  fontSize: "13px",
+  marginBottom: "4px",
+  fontWeight: "700",
+  letterSpacing: "1px"
 };
 
 const fixtureDate = {
@@ -541,7 +612,7 @@ const fixtureTitle = {
   fontWeight: "800"
 };
 
-const fixtureChannelText = {
+const fixtureMeta = {
   color: "#d0d0d0",
   marginTop: "4px"
 };
@@ -587,7 +658,15 @@ const emptyLane = {
   color: "#bdbdbd"
 };
 
+const laneFixtureSport = {
+  color: "#cfcfcf",
+  fontSize: "13px",
+  fontWeight: "700",
+  letterSpacing: "1px"
+};
+
 const laneFixtureDate = {
+  marginTop: "4px",
   color: "#cfcfcf",
   fontSize: "14px",
   fontWeight: "700"
