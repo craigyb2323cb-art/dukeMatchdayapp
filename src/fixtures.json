@@ -1,1 +1,43 @@
 
+{
+  "weekday": [
+    {
+      "id": 1,
+      "date": "2026-03-09",
+      "title": "Premier League",
+      "time": "12:30",
+      "channel": "Sky Sports Main Event",
+      "code": "SKY",
+      "dayType": "weekday"
+    },
+    {
+      "id": 2,
+      "date": "2026-03-09",
+      "title": "Champions League",
+      "time": "15:00",
+      "channel": "TNT Sports 1",
+      "code": "TNT",
+      "dayType": "weekday"
+    }
+  ],
+  "weekend": [
+    {
+      "id": 101,
+      "date": "2026-03-14",
+      "title": "Premier League Early Kick Off",
+      "time": "12:30",
+      "channel": "Sky Sports Main Event",
+      "code": "SKY",
+      "dayType": "weekend"
+    },
+    {
+      "id": 102,
+      "date": "2026-03-14",
+      "title": "Rugby Union",
+      "time": "14:00",
+      "channel": "ITV 1",
+      "code": "ITV",
+      "dayType": "weekend"
+    }
+  ]
+}
