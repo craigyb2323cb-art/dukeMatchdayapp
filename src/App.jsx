@@ -1,163 +1,217 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
 
-const weekdayFixtures = [
-  { id: 1, title: "Premier League", time: "12:30", channel: "Sky Sports Main Event", code: "SKY", dayType: "weekday" },
-  { id: 2, title: "Champions League", time: "15:00", channel: "TNT Sports 1", code: "TNT", dayType: "weekday" },
-  { id: 3, title: "FA Cup", time: "17:30", channel: "BBC One", code: "BBC", dayType: "weekday" },
-  { id: 4, title: "Six Nations", time: "20:00", channel: "ITV 1", code: "ITV", dayType: "weekday" },
-  { id: 5, title: "Boxing", time: "22:00", channel: "Amazon Prime", code: "AMAZON", dayType: "weekday" }
+const defaultMatches = [
+  "Premier League 17:30 - Sky Sports Main Event (Ch401)",
+  "Champions League 20:00 - TNT Sports 1 (Ch410)",
+  "FA Cup 19:45 - BBC One (Ch101)",
+  "Six Nations 16:45 - ITV 1 (Ch103)",
+  "Boxing 22:00 - Amazon Prime"
 ];
-
-const weekendFixtures = [
-  { id: 101, title: "Premier League Early Kick Off", time: "12:30", channel: "Sky Sports Main Event", code: "SKY", dayType: "weekend" },
-  { id: 102, title: "Rugby Union", time: "14:00", channel: "ITV 1", code: "ITV", dayType: "weekend" },
-  { id: 103, title: "Premier League 3pm", time: "15:00", channel: "Sky Sports Premier League", code: "SKY", dayType: "weekend" },
-  { id: 104, title: "Championship Football", time: "17:30", channel: "TNT Sports 1", code: "TNT", dayType: "weekend" },
-  { id: 105, title: "Match of the Day Style Game", time: "19:45", channel: "BBC One", code: "BBC", dayType: "weekend" },
-  { id: 106, title: "Fight Night", time: "22:00", channel: "Amazon Prime", code: "AMAZON", dayType: "weekend" }
-];
-
-const STORAGE_KEY = "duke-matchday-state-v2";
 
 export default function App() {
   const [page, setPage] = useState("fixtures");
-  const [fixtureMode, setFixtureMode] = useState("weekday");
-
-  const [unassigned, setUnassigned] = useState({
-    weekday: weekdayFixtures,
-    weekend: weekendFixtures
+  const [boxes, setBoxes] = useState({
+    box1: "No match assigned",
+    box2: "No match assigned",
+    box3: "No match assigned"
   });
+  const [matches, setMatches] = useState(defaultMatches);
+  const [copied, setCopied] = useState(false);
 
-  const [schedule, setSchedule] = useState({
-    box1: [],
-    box2: [],
-    box3: []
-  });
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setPage(parsed.page || "fixtures");
-      setFixtureMode(parsed.fixtureMode || "weekday");
-      setUnassigned(parsed.unassigned || { weekday: weekdayFixtures, weekend: weekendFixtures });
-      setSchedule(parsed.schedule || { box1: [], box2: [], box3: [] });
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        page,
-        fixtureMode,
-        unassigned,
-        schedule
-      })
-    );
-  }, [page, fixtureMode, unassigned, schedule]);
-
-  function getChannelInfo(codeOrText) {
-    const text = String(codeOrText).toLowerCase();
-
-    if (text.includes("sky")) return { label: "SKY", bg: "#1565c0", border: "#42a5f5" };
-    if (text.includes("tnt")) return { label: "TNT", bg: "#e65100", border: "#ffb74d" };
-    if (text.includes("bbc")) return { label: "BBC", bg: "#6a1b9a", border: "#ba68c8" };
-    if (text.includes("itv")) return { label: "ITV", bg: "#2e7d32", border: "#81c784" };
-    if (text.includes("amazon")) return { label: "AMAZON", bg: "#212121", border: "#fbc02d" };
-
-    return { label: "OTHER", bg: "#424242", border: "#9e9e9e" };
+  function assign(box, match) {
+    setBoxes((prev) => ({
+      ...prev,
+      [box]: match
+    }));
+    setMatches((prev) => prev.filter((m) => m !== match));
   }
 
-  function assignFixture(boxKey, fixture) {
-    setSchedule((prev) => {
-      const next = {
-        ...prev,
-        [boxKey]: [...prev[boxKey], fixture].sort((a, b) => a.time.localeCompare(b.time))
-      };
-      return next;
+  function resetAssignments() {
+    setBoxes({
+      box1: "No match assigned",
+      box2: "No match assigned",
+      box3: "No match assigned"
     });
-
-    setUnassigned((prev) => ({
-      ...prev,
-      [fixture.dayType]: prev[fixture.dayType].filter((f) => f.id !== fixture.id)
-    }));
-  }
-
-  function removeFromBox(boxKey, fixture) {
-    setSchedule((prev) => ({
-      ...prev,
-      [boxKey]: prev[boxKey].filter((f) => f.id !== fixture.id)
-    }));
-
-    setUnassigned((prev) => ({
-      ...prev,
-      [fixture.dayType]: [...prev[fixture.dayType], fixture].sort((a, b) => a.time.localeCompare(b.time))
-    }));
-  }
-
-  function resetAll() {
-    setUnassigned({
-      weekday: weekdayFixtures,
-      weekend: weekendFixtures
-    });
-    setSchedule({
-      box1: [],
-      box2: [],
-      box3: []
-    });
-  }
-
-  function clearBox(boxKey) {
-    const fixturesToReturn = schedule[boxKey];
-
-    setSchedule((prev) => ({
-      ...prev,
-      [boxKey]: []
-    }));
-
-    setUnassigned((prev) => {
-      const next = { ...prev };
-      fixturesToReturn.forEach((fixture) => {
-        next[fixture.dayType] = [...next[fixture.dayType], fixture].sort((a, b) => a.time.localeCompare(b.time));
-      });
-      return next;
-    });
+    setMatches(defaultMatches);
   }
 
   function openFanzoFixtures() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
   }
 
-  function autoAssignDay(dayType) {
-    const fixtures = [...unassigned[dayType]].sort((a, b) => a.time.localeCompare(b.time));
-    const nextSchedule = {
-      box1: [...schedule.box1],
-      box2: [...schedule.box2],
-      box3: [...schedule.box3]
-    };
-
-    fixtures.forEach((fixture, index) => {
-      const target = index % 3 === 0 ? "box1" : index % 3 === 1 ? "box2" : "box3";
-      nextSchedule[target].push(fixture);
-    });
-
-    nextSchedule.box1.sort((a, b) => a.time.localeCompare(b.time));
-    nextSchedule.box2.sort((a, b) => a.time.localeCompare(b.time));
-    nextSchedule.box3.sort((a, b) => a.time.localeCompare(b.time));
-
-    setSchedule(nextSchedule);
-    setUnassigned((prev) => ({
-      ...prev,
-      [dayType]: []
-    }));
+  function openCapCut() {
+    window.open("https://www.capcut.com/", "_blank");
   }
 
-  const currentFixtures = useMemo(() => unassigned[fixtureMode], [unassigned, fixtureMode]);
+  function openFacebook() {
+    window.open("https://www.facebook.com/", "_blank");
+  }
 
-  function ChannelBadge({ code }) {
-    const channel = getChannelInfo(code);
+  function openInstagram() {
+    window.open("https://www.instagram.com/", "_blank");
+  }
+
+  function getChannelInfo(text) {
+    const item = text.toLowerCase();
+
+    if (item.includes("sky")) {
+      return { label: "SKY", bg: "#1565c0", border: "#42a5f5" };
+    }
+    if (item.includes("tnt")) {
+      return { label: "TNT", bg: "#e65100", border: "#ffb74d" };
+    }
+    if (item.includes("bbc")) {
+      return { label: "BBC", bg: "#6a1b9a", border: "#ba68c8" };
+    }
+    if (item.includes("itv")) {
+      return { label: "ITV", bg: "#2e7d32", border: "#81c784" };
+    }
+    if (item.includes("amazon")) {
+      return { label: "AMAZON", bg: "#212121", border: "#fbc02d" };
+    }
+
+    return { label: "OTHER", bg: "#424242", border: "#9e9e9e" };
+  }
+
+  function getPopularityScore(match) {
+    const m = match.toLowerCase();
+    let score = 0;
+
+    if (m.includes("premier league")) score += 100;
+    if (m.includes("champions league")) score += 90;
+    if (m.includes("fa cup")) score += 75;
+    if (m.includes("boxing")) score += 70;
+    if (m.includes("six nations")) score += 65;
+
+    if (m.includes("sky sports main event")) score += 20;
+    if (m.includes("tnt")) score += 15;
+    if (m.includes("bbc")) score += 10;
+    if (m.includes("itv")) score += 8;
+    if (m.includes("amazon")) score += 6;
+
+    return score;
+  }
+
+  function autoAssign() {
+    const pool = [...matches].sort(
+      (a, b) => getPopularityScore(b) - getPopularityScore(a)
+    );
+
+    setBoxes({
+      box1: pool[0] || "No match assigned",
+      box2: pool[1] || "No match assigned",
+      box3: pool[2] || "No match assigned"
+    });
+
+    setMatches(pool.slice(3));
+  }
+
+  const assignedGames = useMemo(() => {
+    const items = [
+      { box: "Sky Box 1", match: boxes.box1 },
+      { box: "Sky Box 2", match: boxes.box2 },
+      { box: "Sky Box 3", match: boxes.box3 }
+    ].filter((item) => item.match !== "No match assigned");
+
+    return items;
+  }, [boxes]);
+
+  const socialCaption = useMemo(() => {
+    if (assignedGames.length === 0) {
+      return `This week at The Duke Of Devonshire, Eastbourne ⚽🍻
+
+Big night, big match, even bigger atmosphere.
+
+We’re showing live sport all week at:
+155 Terminus Road, Eastbourne, BN21 3NU
+📞 01323 433041
+
+Check our screens in venue for what’s on and when.
+
+#Eastbourne #EastbournePub #LiveSport #SportsBar #TheDukeOfDevonshire`;
+    }
+
+    const fixtureLines = assignedGames
+      .map((item) => `📺 ${item.box}\n${item.match}`)
+      .join("\n\n");
+
+    return `This week at The Duke Of Devonshire, Eastbourne ⚽🍻
+
+Big night, big match, even bigger atmosphere.
+
+${fixtureLines}
+
+Join us at:
+The Duke Of Devonshire
+155 Terminus Road, Eastbourne, BN21 3NU
+📞 01323 433041
+
+#Eastbourne #EastbournePub #EastbourneSport #LiveSport #SportsBar #PremierLeague #ChampionsLeague #SixNations #Boxing #TheDukeOfDevonshire`;
+  }, [assignedGames]);
+
+  async function copyCaption() {
+    try {
+      await navigator.clipboard.writeText(socialCaption);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      alert("Could not copy caption on this device.");
+    }
+  }
+
+  function downloadPoster() {
+    const lines = [
+      "THIS WEEK AT THE DUKE",
+      "",
+      ...assignedGames.flatMap((item) => [item.box, item.match, ""]),
+      "THE DUKE OF DEVONSHIRE",
+      "155 TERMINUS ROAD, EASTBOURNE",
+      "01323 433041"
+    ];
+
+    const svgHeight = 900;
+    const lineHeight = 38;
+    const startY = 120;
+
+    const textSvg = lines
+      .map((line, index) => {
+        const safe = line
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        const weight = index === 0 || line.startsWith("Sky Box") || line.startsWith("THE DUKE")
+          ? "700"
+          : "400";
+        const size = index === 0 ? 34 : line.startsWith("Sky Box") ? 24 : 20;
+        const fill = index === 0 ? "#ffffff" : "#f3f3f3";
+        return `<text x="60" y="${startY + index * lineHeight}" font-family="Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}">${safe}</text>`;
+      })
+      .join("");
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="${svgHeight}">
+        <rect width="100%" height="100%" fill="#111111"/>
+        <rect x="0" y="0" width="1080" height="18" fill="#1e88e5"/>
+        <rect x="40" y="40" width="1000" height="${svgHeight - 80}" rx="24" fill="#1c1c1c" stroke="#2f2f2f" stroke-width="2"/>
+        ${textSvg}
+      </svg>
+    `;
+
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "this-week-at-the-duke.svg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function ChannelBadge({ text }) {
+    const channel = getChannelInfo(text);
+
     return (
       <span
         style={{
@@ -168,7 +222,8 @@ export default function App() {
           borderRadius: "999px",
           fontSize: "12px",
           fontWeight: "800",
-          letterSpacing: "0.4px"
+          letterSpacing: "0.5px",
+          marginTop: "10px"
         }}
       >
         {channel.label}
@@ -180,110 +235,176 @@ export default function App() {
     <div style={appShell}>
       <div style={heroHeader}>
         <img src={logo} alt="Duke of Devonshire logo" style={logoStyle} />
+
         <div style={{ flex: 1 }}>
           <div style={eyebrow}>WELCOME TO</div>
           <h1 style={mainTitle}>The Duke Of Devonshire</h1>
-          <div style={subTitle}>Live Sport Schedule & Screen Planner</div>
+          <div style={subTitle}>Excellent Value Pub In Eastbourne</div>
+          <div style={heroCopy}>
+            Big nights, big matches and an even bigger atmosphere.
+          </div>
+        </div>
+      </div>
+
+      <div style={topInfoGrid}>
+        <div style={infoCard}>
+          <div style={infoTitle}>Venue</div>
+          <div style={infoText}>155 Terminus Road</div>
+          <div style={infoText}>Eastbourne, East Sussex, BN21 3NU</div>
+          <div style={infoText}>01323 433041</div>
+        </div>
+
+        <div style={infoCard}>
+          <div style={infoTitle}>Opening Hours</div>
+          <div style={infoText}>Mon-Sun: 10:00 - 23:00</div>
+        </div>
+
+        <div style={infoCard}>
+          <div style={infoTitle}>Pub Highlights</div>
+          <div style={badgeWrap}>
+            <span style={featureBadge}>Live Sport</span>
+            <span style={featureBadge}>Broad Range of Beers</span>
+            <span style={featureBadge}>Pub Garden</span>
+            <span style={featureBadge}>Heaters & Cover</span>
+            <span style={featureBadge}>Food & Drink Deals</span>
+          </div>
         </div>
       </div>
 
       <div style={{ padding: "20px" }}>
         <div style={navRow}>
-          <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>Fixtures</button>
-          <button onClick={() => setPage("board")} style={tabButton(page === "board")}>Sky Box Board</button>
-          <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>FANZO Planner</button>
-          <button onClick={resetAll} style={resetButton}>Reset All</button>
+          <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>
+            Live Fixtures
+          </button>
+
+          <button onClick={() => setPage("board")} style={tabButton(page === "board")}>
+            Sky Box Board
+          </button>
+
+          <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
+            FANZO Planner
+          </button>
+
+          <button onClick={() => setPage("social")} style={tabButton(page === "social")}>
+            Social Media
+          </button>
+
+          <button onClick={autoAssign} style={autoAssignButton}>
+            Auto Assign
+          </button>
+
+          <button onClick={resetAssignments} style={resetButton}>
+            Reset All
+          </button>
         </div>
 
         {page === "fixtures" && (
           <div>
-            <h2 style={sectionTitle}>Assign Matches Across The Whole Day</h2>
+            <h2 style={sectionTitle}>Live Sports</h2>
 
-            <div style={modeRow}>
-              <button onClick={() => setFixtureMode("weekday")} style={modeButton(fixtureMode === "weekday")}>
-                Weekday
-              </button>
-              <button onClick={() => setFixtureMode("weekend")} style={modeButton(fixtureMode === "weekend")}>
-                Weekend
-              </button>
-              <button onClick={() => autoAssignDay(fixtureMode)} style={autoAssignButton}>
-                Auto Assign This {fixtureMode === "weekend" ? "Weekend" : "Day"}
-              </button>
+            <div style={iframeCard}>
+              <iframe
+                src="https://widget.fanzo.com/?id=14245"
+                width="100%"
+                height="500"
+                title="Fanzo live sports"
+                style={{ border: "none", display: "block", background: "#fff" }}
+              ></iframe>
             </div>
 
-            <div style={helperCard}>
-              Matches stay saved after refresh. You can assign early games now and come back later to place the evening fixtures.
-            </div>
-
-            {currentFixtures.length === 0 && (
-              <div style={emptyCard}>
-                ✅ No unassigned {fixtureMode} fixtures left
+            <div style={assignIntroCard}>
+              <div style={assignIntroTitle}>Assign matches to screens</div>
+              <div style={assignIntroText}>
+                Put the biggest event on Sky Box 1, then work down to 3.
               </div>
-            )}
+            </div>
 
-            {currentFixtures.map((fixture) => {
-              const channel = getChannelInfo(fixture.code);
+            {matches.map((match, i) => {
+              const channel = getChannelInfo(match);
 
               return (
                 <div
-                  key={fixture.id}
+                  key={i}
                   style={{
-                    ...fixtureCard,
-                    borderLeft: `6px solid ${channel.border}`
+                    marginBottom: "16px",
+                    padding: "16px",
+                    background: "#1b1b1b",
+                    borderRadius: "14px",
+                    borderLeft: `6px solid ${channel.border}`,
+                    borderTop: `1px solid ${channel.border}`,
+                    borderRight: "1px solid #313131",
+                    borderBottom: "1px solid #313131",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
                   }}
                 >
-                  <div style={fixtureTopRow}>
-                    <div>
-                      <div style={fixtureTitle}>{fixture.title}</div>
-                      <div style={fixtureMeta}>
-                        {fixture.time} • {fixture.channel}
-                      </div>
-                    </div>
-                    <ChannelBadge code={fixture.code} />
-                  </div>
+                  <div style={matchTitle}>{match}</div>
+
+                  <ChannelBadge text={match} />
 
                   <div style={buttonRow}>
-                    <button style={box1Button} onClick={() => assignFixture("box1", fixture)}>📺 SKY BOX 1</button>
-                    <button style={box2Button} onClick={() => assignFixture("box2", fixture)}>📺 SKY BOX 2</button>
-                    <button style={box3Button} onClick={() => assignFixture("box3", fixture)}>📺 SKY BOX 3</button>
+                    <button style={box1Button} onClick={() => assign("box1", match)}>
+                      📺 SKY BOX 1
+                    </button>
+
+                    <button style={box2Button} onClick={() => assign("box2", match)}>
+                      📺 SKY BOX 2
+                    </button>
+
+                    <button style={box3Button} onClick={() => assign("box3", match)}>
+                      📺 SKY BOX 3
+                    </button>
                   </div>
                 </div>
               );
             })}
+
+            {matches.length === 0 && (
+              <div style={allAssignedCard}>✅ All matches assigned</div>
+            )}
           </div>
         )}
 
         {page === "board" && (
           <div>
-            <h2 style={sectionTitle}>Full Day Sky Box Allocation</h2>
+            <h2 style={sectionTitle}>Sky Box TV Schedule</h2>
 
             <div style={boardGrid}>
-              <SkyBoxColumn
-                title="📺 SKY BOX 1"
-                fixtures={schedule.box1}
-                color="#1e88e5"
-                getChannelInfo={getChannelInfo}
-                onRemove={(fixture) => removeFromBox("box1", fixture)}
-                onClear={() => clearBox("box1")}
-              />
+              {[["box1", "📺 SKY BOX 1"], ["box2", "📺 SKY BOX 2"], ["box3", "📺 SKY BOX 3"]].map(
+                ([key, title]) => {
+                  const channel = getChannelInfo(boxes[key]);
 
-              <SkyBoxColumn
-                title="📺 SKY BOX 2"
-                fixtures={schedule.box2}
-                color="#fb8c00"
-                getChannelInfo={getChannelInfo}
-                onRemove={(fixture) => removeFromBox("box2", fixture)}
-                onClear={() => clearBox("box2")}
-              />
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        background: "#1c1c1c",
+                        borderRadius: "16px",
+                        padding: "20px",
+                        borderTop: `6px solid ${channel.border}`,
+                        minHeight: "210px",
+                        boxShadow: "0 10px 28px rgba(0,0,0,0.28)"
+                      }}
+                    >
+                      <div style={boardTitle}>{title}</div>
+                      <div style={boardText}>{boxes[key]}</div>
 
-              <SkyBoxColumn
-                title="📺 SKY BOX 3"
-                fixtures={schedule.box3}
-                color="#43a047"
-                getChannelInfo={getChannelInfo}
-                onRemove={(fixture) => removeFromBox("box3", fixture)}
-                onClear={() => clearBox("box3")}
-              />
+                      {boxes[key] !== "No match assigned" && (
+                        <div style={{ marginTop: "14px" }}>
+                          <ChannelBadge text={boxes[key]} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              )}
+            </div>
+
+            <div style={legendRow}>
+              <div style={legendStyle("#1565c0")}>Sky</div>
+              <div style={legendStyle("#e65100")}>TNT</div>
+              <div style={legendStyle("#6a1b9a")}>BBC</div>
+              <div style={legendStyle("#2e7d32")}>ITV</div>
+              <div style={legendStyle("#212121")}>Amazon</div>
             </div>
           </div>
         )}
@@ -291,85 +412,95 @@ export default function App() {
         {page === "fanzo" && (
           <div>
             <h2 style={sectionTitle}>FANZO Fixture Planner</h2>
+
             <div style={plannerCard}>
-              <p style={{ marginTop: 0, fontSize: "18px", color: "#f1f1f1" }}>
+              <p style={{ fontSize: "18px", marginTop: 0, color: "#f0f0f0" }}>
                 Open the full FANZO fixture planner in a separate page.
               </p>
+
               <button onClick={openFanzoFixtures} style={openButton}>
                 Open FANZO Fixtures
               </button>
             </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
 
-function SkyBoxColumn({ title, fixtures, color, getChannelInfo, onRemove, onClear }) {
-  return (
-    <div
-      style={{
-        background: "#1c1c1c",
-        borderRadius: "16px",
-        padding: "18px",
-        borderTop: `6px solid ${color}`,
-        minHeight: "220px",
-        boxShadow: "0 10px 28px rgba(0,0,0,0.28)"
-      }}
-    >
-      <div style={boardTitle}>{title}</div>
+        {page === "social" && (
+          <div>
+            <h2 style={sectionTitle}>Social Media Preview</h2>
 
-      <button onClick={onClear} style={clearBoxButton}>
-        Clear Box
-      </button>
+            <div style={socialGrid}>
+              <div style={socialPreviewCard}>
+                <div style={socialPreviewHeader}>
+                  <img src={logo} alt="Duke logo" style={socialPreviewLogo} />
+                  <div>
+                    <div style={socialPreviewEyebrow}>THIS WEEK AT</div>
+                    <div style={socialPreviewTitle}>THE DUKE</div>
+                  </div>
+                </div>
 
-      {fixtures.length === 0 && (
-        <div style={{ color: "#bdbdbd", marginTop: "14px" }}>No matches assigned</div>
-      )}
+                <div style={{ marginTop: "18px" }}>
+                  {assignedGames.length === 0 && (
+                    <div style={{ color: "#d0d0d0", fontSize: "18px" }}>
+                      No matches assigned yet.
+                    </div>
+                  )}
 
-      {fixtures.map((fixture) => {
-        const channel = getChannelInfo(fixture.code);
+                  {assignedGames.map((item, index) => (
+                    <div key={index} style={socialMatchCard}>
+                      <div style={socialBoxTitle}>{item.box}</div>
+                      <div style={socialMatchText}>{item.match}</div>
+                      <ChannelBadge text={item.match} />
+                    </div>
+                  ))}
+                </div>
 
-        return (
-          <div
-            key={fixture.id}
-            style={{
-              marginTop: "14px",
-              padding: "14px",
-              borderRadius: "12px",
-              background: "#252525",
-              borderLeft: `5px solid ${channel.border}`
-            }}
-          >
-            <div style={{ fontWeight: "800", fontSize: "18px" }}>{fixture.time}</div>
-            <div style={{ marginTop: "4px", fontSize: "17px", fontWeight: "700" }}>{fixture.title}</div>
-            <div style={{ marginTop: "4px", color: "#d0d0d0" }}>{fixture.channel}</div>
+                <div style={socialFooter}>
+                  155 Terminus Road, Eastbourne • 01323 433041
+                </div>
+              </div>
 
-            <div style={{ marginTop: "10px" }}>
-              <span
-                style={{
-                  display: "inline-block",
-                  background: channel.bg,
-                  color: "white",
-                  padding: "6px 10px",
-                  borderRadius: "999px",
-                  fontSize: "12px",
-                  fontWeight: "800"
-                }}
-              >
-                {channel.label}
-              </span>
-            </div>
+              <div style={socialToolsCard}>
+                <div style={infoTitle}>Caption Preview</div>
+                <textarea
+                  readOnly
+                  value={socialCaption}
+                  style={captionBox}
+                />
 
-            <div style={{ marginTop: "10px" }}>
-              <button onClick={() => onRemove(fixture)} style={removeButton}>
-                Remove
-              </button>
+                <div style={buttonRow}>
+                  <button onClick={copyCaption} style={openButton}>
+                    {copied ? "Copied" : "Copy Caption"}
+                  </button>
+
+                  <button onClick={downloadPoster} style={box1Button}>
+                    Download Poster
+                  </button>
+                </div>
+
+                <div style={buttonRow}>
+                  <button onClick={openCapCut} style={box2Button}>
+                    Open CapCut
+                  </button>
+
+                  <button onClick={openFacebook} style={box3Button}>
+                    Open Facebook
+                  </button>
+
+                  <button onClick={openInstagram} style={tabButton(true)}>
+                    Open Instagram
+                  </button>
+                </div>
+
+                <div style={socialTipBox}>
+                  Use <strong>Download Poster</strong> for a quick static graphic, or open
+                  <strong> CapCut</strong> to turn the weekly preview into a Reel or Story.
+                </div>
+              </div>
             </div>
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 }
@@ -388,6 +519,7 @@ const heroHeader = {
   padding: "18px 20px",
   background: "linear-gradient(135deg, #000000 0%, #111111 45%, #1b1b1b 100%)",
   borderBottom: "3px solid #1e88e5",
+  boxShadow: "0 10px 28px rgba(0,0,0,0.28)",
   flexWrap: "wrap"
 };
 
@@ -421,11 +553,117 @@ const subTitle = {
   letterSpacing: "1px"
 };
 
+const heroCopy = {
+  marginTop: "6px",
+  color: "#b0b0b0",
+  fontSize: "15px"
+};
+
+const topInfoGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: "14px",
+  padding: "18px 20px 0 20px"
+};
+
+const infoCard = {
+  background: "#1a1a1a",
+  border: "1px solid #2f2f2f",
+  borderRadius: "14px",
+  padding: "16px",
+  boxShadow: "0 8px 22px rgba(0,0,0,0.22)"
+};
+
+const infoTitle = {
+  fontSize: "15px",
+  fontWeight: "800",
+  color: "#64b5f6",
+  marginBottom: "10px",
+  textTransform: "uppercase",
+  letterSpacing: "1px"
+};
+
+const infoText = {
+  color: "#ececec",
+  lineHeight: "1.6",
+  fontSize: "15px"
+};
+
+const badgeWrap = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "8px"
+};
+
+const featureBadge = {
+  background: "#252525",
+  color: "#f5f5f5",
+  border: "1px solid #3a3a3a",
+  padding: "8px 10px",
+  borderRadius: "999px",
+  fontSize: "12px",
+  fontWeight: "700"
+};
+
 const navRow = {
   display: "flex",
   gap: "10px",
   flexWrap: "wrap",
   marginBottom: "20px"
+};
+
+const sectionTitle = {
+  marginBottom: "16px",
+  fontSize: "28px"
+};
+
+const iframeCard = {
+  marginBottom: "24px",
+  borderRadius: "14px",
+  overflow: "hidden",
+  border: "1px solid #333",
+  boxShadow: "0 10px 28px rgba(0,0,0,0.28)"
+};
+
+const assignIntroCard = {
+  background: "#171717",
+  border: "1px solid #2d2d2d",
+  borderRadius: "14px",
+  padding: "16px",
+  marginBottom: "16px"
+};
+
+const assignIntroTitle = {
+  fontWeight: "800",
+  fontSize: "18px",
+  marginBottom: "6px"
+};
+
+const assignIntroText = {
+  color: "#c7c7c7"
+};
+
+const matchTitle = {
+  marginBottom: "8px",
+  fontSize: "18px",
+  fontWeight: "800",
+  lineHeight: "1.4"
+};
+
+const buttonRow = {
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap",
+  marginTop: "14px"
+};
+
+const allAssignedCard = {
+  padding: "18px",
+  background: "#1c1c1c",
+  borderRadius: "12px",
+  fontSize: "18px",
+  fontWeight: "bold",
+  border: "1px solid #2f2f2f"
 };
 
 const tabButton = (active) => ({
@@ -472,26 +710,6 @@ const openButton = {
   cursor: "pointer"
 };
 
-const clearBoxButton = {
-  background: "#5d4037",
-  color: "white",
-  border: "none",
-  padding: "10px 14px",
-  borderRadius: "8px",
-  fontWeight: "700",
-  cursor: "pointer"
-};
-
-const removeButton = {
-  background: "#8e2424",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "8px",
-  fontWeight: "700",
-  cursor: "pointer"
-};
-
 const box1Button = {
   background: "#1e88e5",
   color: "white",
@@ -525,85 +743,9 @@ const box3Button = {
   cursor: "pointer"
 };
 
-const sectionTitle = {
-  marginBottom: "16px",
-  fontSize: "28px"
-};
-
-const modeRow = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap",
-  marginBottom: "16px"
-};
-
-const modeButton = (active) => ({
-  background: active ? "#1565c0" : "#2b2b2b",
-  color: "white",
-  border: "none",
-  padding: "12px 16px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  cursor: "pointer"
-});
-
-const helperCard = {
-  background: "#171717",
-  border: "1px solid #2d2d2d",
-  borderRadius: "14px",
-  padding: "16px",
-  marginBottom: "16px",
-  color: "#d0d0d0"
-};
-
-const emptyCard = {
-  padding: "18px",
-  background: "#1c1c1c",
-  borderRadius: "12px",
-  fontSize: "18px",
-  fontWeight: "bold",
-  border: "1px solid #2f2f2f"
-};
-
-const fixtureCard = {
-  marginBottom: "16px",
-  padding: "16px",
-  background: "#1b1b1b",
-  borderRadius: "14px",
-  borderTop: "1px solid #313131",
-  borderRight: "1px solid #313131",
-  borderBottom: "1px solid #313131",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
-};
-
-const fixtureTopRow = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "12px",
-  flexWrap: "wrap"
-};
-
-const fixtureTitle = {
-  fontSize: "19px",
-  fontWeight: "800"
-};
-
-const fixtureMeta = {
-  color: "#d0d0d0",
-  marginTop: "4px"
-};
-
-const buttonRow = {
-  display: "flex",
-  gap: "12px",
-  flexWrap: "wrap",
-  marginTop: "14px"
-};
-
 const boardGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
   gap: "16px"
 };
 
@@ -613,9 +755,132 @@ const boardTitle = {
   marginBottom: "12px"
 };
 
+const boardText = {
+  fontSize: "18px",
+  lineHeight: "1.5",
+  color: "#f1f1f1"
+};
+
+const legendRow = {
+  marginTop: "24px",
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap"
+};
+
+const legendStyle = (background) => ({
+  background,
+  color: "white",
+  padding: "10px 14px",
+  borderRadius: "10px",
+  fontWeight: "800"
+});
+
 const plannerCard = {
   background: "#1c1c1c",
   borderRadius: "12px",
   padding: "24px",
   border: "1px solid #333"
+};
+
+const socialGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  gap: "18px"
+};
+
+const socialPreviewCard = {
+  background: "linear-gradient(180deg, #121212 0%, #1d1d1d 100%)",
+  border: "1px solid #333",
+  borderRadius: "18px",
+  padding: "20px",
+  boxShadow: "0 12px 30px rgba(0,0,0,0.28)"
+};
+
+const socialToolsCard = {
+  background: "#1c1c1c",
+  border: "1px solid #333",
+  borderRadius: "18px",
+  padding: "20px",
+  boxShadow: "0 12px 30px rgba(0,0,0,0.28)"
+};
+
+const socialPreviewHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px"
+};
+
+const socialPreviewLogo = {
+  width: "58px",
+  height: "58px",
+  borderRadius: "50%",
+  objectFit: "cover"
+};
+
+const socialPreviewEyebrow = {
+  color: "#bdbdbd",
+  fontSize: "12px",
+  letterSpacing: "2px",
+  fontWeight: "800"
+};
+
+const socialPreviewTitle = {
+  color: "#fff",
+  fontSize: "28px",
+  fontWeight: "900",
+  lineHeight: "1"
+};
+
+const socialMatchCard = {
+  background: "#252525",
+  borderRadius: "12px",
+  padding: "14px",
+  marginBottom: "12px"
+};
+
+const socialBoxTitle = {
+  color: "#64b5f6",
+  fontSize: "13px",
+  fontWeight: "800",
+  marginBottom: "6px",
+  letterSpacing: "1px"
+};
+
+const socialMatchText = {
+  fontSize: "17px",
+  lineHeight: "1.45",
+  fontWeight: "700"
+};
+
+const socialFooter = {
+  marginTop: "18px",
+  color: "#cfcfcf",
+  fontSize: "14px",
+  borderTop: "1px solid #333",
+  paddingTop: "14px"
+};
+
+const captionBox = {
+  width: "100%",
+  minHeight: "280px",
+  background: "#111",
+  color: "#fff",
+  border: "1px solid #333",
+  borderRadius: "12px",
+  padding: "14px",
+  resize: "vertical",
+  fontSize: "15px",
+  lineHeight: "1.5",
+  boxSizing: "border-box"
+};
+
+const socialTipBox = {
+  marginTop: "16px",
+  background: "#171717",
+  border: "1px solid #2d2d2d",
+  borderRadius: "12px",
+  padding: "14px",
+  color: "#d7d7d7",
+  lineHeight: "1.5"
 };
