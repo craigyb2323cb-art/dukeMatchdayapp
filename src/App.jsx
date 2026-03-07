@@ -2,36 +2,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
 
 const STORAGE_KEY = "duke-auto-fixtures-v1";
+
+// 0 = Sunday, 1 = Monday ... 6 = Saturday
 const OPENING_HOURS = {
-  0: { open: "12:00", close: "23:30" }, // Sunday
-  1: { open: "12:00", close: "23:30" }, // Monday
-  2: { open: "12:00", close: "23:30" }, // Tuesday
-  3: { open: "12:00", close: "23:30" }, // Wednesday
-  4: { open: "12:00", close: "23:30" }, // Thursday
-  5: { open: "12:00", close: "00:30" }, // Friday
-  6: { open: "12:00", close: "00:30" }  // Saturday
+  0: { open: "12:00", close: "23:30" },
+  1: { open: "12:00", close: "23:30" },
+  2: { open: "12:00", close: "23:30" },
+  3: { open: "12:00", close: "23:30" },
+  4: { open: "12:00", close: "23:30" },
+  5: { open: "12:00", close: "00:30" },
+  6: { open: "12:00", close: "00:30" }
 };
-function isWithinOpeningHours(fixture) {
-  if (!fixture.time || !fixture.date) return true;
-
-  const date = new Date(fixture.date);
-  const day = date.getDay();
-
-  const hours = OPENING_HOURS[day];
-
-  if (!hours) return true;
-
-  const [matchHour, matchMinute] = fixture.time.split(":").map(Number);
-  const [openHour, openMinute] = hours.open.split(":").map(Number);
-  const [closeHour, closeMinute] = hours.close.split(":").map(Number);
-
-  const matchMinutes = matchHour * 60 + matchMinute;
-  const openMinutes = openHour * 60 + openMinute;
-  const closeMinutes = closeHour * 60 + closeMinute;
-
-  return matchMinutes >= openMinutes && matchMinutes <= closeMinutes;
-}
-
 
 export default function App() {
   const [page, setPage] = useState("fixtures");
@@ -96,25 +77,11 @@ export default function App() {
   function getChannelInfo(codeOrText) {
     const text = String(codeOrText || "").toLowerCase();
 
-    if (text.includes("sky")) {
-      return { label: "SKY", bg: "#1565c0" };
-    }
-
-    if (text.includes("tnt")) {
-      return { label: "TNT", bg: "#e65100" };
-    }
-
-    if (text.includes("bbc")) {
-      return { label: "BBC", bg: "#6a1b9a" };
-    }
-
-    if (text.includes("itv")) {
-      return { label: "ITV", bg: "#2e7d32" };
-    }
-
-    if (text.includes("amazon")) {
-      return { label: "AMAZON", bg: "#212121" };
-    }
+    if (text.includes("sky")) return { label: "SKY", bg: "#1565c0" };
+    if (text.includes("tnt")) return { label: "TNT", bg: "#e65100" };
+    if (text.includes("bbc")) return { label: "BBC", bg: "#6a1b9a" };
+    if (text.includes("itv")) return { label: "ITV", bg: "#2e7d32" };
+    if (text.includes("amazon")) return { label: "AMAZON", bg: "#212121" };
 
     return { label: "OTHER", bg: "#424242" };
   }
@@ -144,6 +111,39 @@ export default function App() {
       day: "numeric",
       month: "short"
     });
+  }
+
+  function timeToMinutes(value) {
+    if (!value || !value.includes(":")) return null;
+    const [hour, minute] = value.split(":").map(Number);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    return hour * 60 + minute;
+  }
+
+  function isWithinOpeningHours(fixture) {
+    if (!fixture?.date || !fixture?.time) return true;
+
+    const date = new Date(`${fixture.date}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return true;
+
+    const dayIndex = date.getDay();
+    const hours = OPENING_HOURS[dayIndex];
+    if (!hours) return true;
+
+    const matchMinutes = timeToMinutes(fixture.time);
+    const openMinutes = timeToMinutes(hours.open);
+    const closeMinutes = timeToMinutes(hours.close);
+
+    if (matchMinutes === null || openMinutes === null || closeMinutes === null) {
+      return true;
+    }
+
+    // Handles normal closing times and after-midnight closing times
+    if (closeMinutes >= openMinutes) {
+      return matchMinutes >= openMinutes && matchMinutes <= closeMinutes;
+    }
+
+    return matchMinutes >= openMinutes || matchMinutes <= closeMinutes;
   }
 
   function isAssigned(fixtureId) {
@@ -189,10 +189,10 @@ export default function App() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
   }
 
-  const unassignedFixtures = fixtures
-  .filter((fixture) => !isAssigned(fixture.id))
-  .filter(isWithinOpeningHours);
-
+  const filteredFixtures = useMemo(() => {
+    const unassignedFixtures = fixtures
+      .filter((fixture) => !isAssigned(fixture.id))
+      .filter((fixture) => isWithinOpeningHours(fixture));
 
     if (sportFilter === "all") {
       return unassignedFixtures;
@@ -270,7 +270,7 @@ export default function App() {
             <div style={styles.plannerIntro}>
               <div style={styles.plannerIntroTitle}>Automatic Fixture Cards</div>
               <div style={styles.plannerIntroText}>
-                Pulls from your backend feed, then lets staff assign each event to a Sky Box.
+                Pulls from your backend feed, filters out fixtures outside opening hours, then lets staff assign each event to a Sky Box.
               </div>
             </div>
 
