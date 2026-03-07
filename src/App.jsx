@@ -61,13 +61,13 @@ export default function App() {
   function getChannelInfo(codeOrText) {
     const text = String(codeOrText).toLowerCase();
 
-    if (text.includes("sky")) return { label: "SKY", bg: "#1565c0", border: "#42a5f5", logo: skyLogo };
-    if (text.includes("tnt")) return { label: "TNT", bg: "#e65100", border: "#ffb74d", logo: tntLogo };
-    if (text.includes("bbc")) return { label: "BBC", bg: "#6a1b9a", border: "#ba68c8", logo: bbcLogo };
-    if (text.includes("itv")) return { label: "ITV", bg: "#2e7d32", border: "#81c784", logo: itvLogo };
-    if (text.includes("amazon")) return { label: "AMAZON", bg: "#212121", border: "#fbc02d", logo: amazonLogo };
+    if (text.includes("sky")) return { label: "SKY", bg: "#1565c0", border: "#42a5f5" };
+    if (text.includes("tnt")) return { label: "TNT", bg: "#e65100", border: "#ffb74d" };
+    if (text.includes("bbc")) return { label: "BBC", bg: "#6a1b9a", border: "#ba68c8" };
+    if (text.includes("itv")) return { label: "ITV", bg: "#2e7d32", border: "#81c784" };
+    if (text.includes("amazon")) return { label: "AMAZON", bg: "#212121", border: "#fbc02d" };
 
-    return { label: "OTHER", bg: "#424242", border: "#9e9e9e", logo: null };
+    return { label: "OTHER", bg: "#424242", border: "#9e9e9e" };
   }
 
   function formatDate(dateString) {
@@ -309,13 +309,6 @@ function FixtureCard({ fixture, getChannelInfo, formatDate, onAssign }) {
         </div>
 
         <div style={channelWrap}>
-          {channel.logo && (
-            <img
-              src={channel.logo}
-              alt={`${channel.label} logo`}
-              style={channelLogoSmall}
-            />
-          )}
           <span style={{ ...channelBadge, background: channel.bg }}>
             {channel.label}
           </span>
@@ -378,13 +371,6 @@ function SkyBoxLane({ title, accent, fixtures, getChannelInfo, formatDate, onRem
             <div style={laneFixtureChannel}>{fixture.channel}</div>
 
             <div style={laneBadgeRow}>
-              {channel.logo && (
-                <img
-                  src={channel.logo}
-                  alt={`${channel.label} logo`}
-                  style={channelLogoSmall}
-                />
-              )}
               <span style={{ ...channelBadge, background: channel.bg }}>
                 {channel.label}
               </span>
@@ -700,16 +686,6 @@ const box3Button = {
   fontWeight: "700",
   fontSize: "15px",
   cursor: "pointer"
-};
-
-const channelLogoSmall = {
-  height: "26px",
-  width: "auto",
-  maxWidth: "72px",
-  objectFit: "contain",
-  background: "#fff",
-  padding: "4px 6px",
-  borderRadius: "8px"
 };
 
 const fanzoCard = {
