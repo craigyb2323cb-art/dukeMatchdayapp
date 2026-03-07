@@ -568,8 +568,7 @@ const fixtureDate = {
 
 const fixtureTitle = {
   fontSize: "21px",
-  fontWeight: "800",
-  lineHeight: "1.2"
+  fontWeight: "800"
 };
 
 const fixtureChannelText = {
