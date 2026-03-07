@@ -189,8 +189,10 @@ export default function App() {
     window.open("https://business.fanzo.com/fixtures", "_blank");
   }
 
-  const filteredFixtures = useMemo(() => {
-    const unassignedFixtures = fixtures.filter((fixture) => !isAssigned(fixture.id));
+  const unassignedFixtures = fixtures
+  .filter((fixture) => !isAssigned(fixture.id))
+  .filter(isWithinOpeningHours);
+
 
     if (sportFilter === "all") {
       return unassignedFixtures;
