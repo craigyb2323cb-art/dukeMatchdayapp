@@ -1,10 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import logo from "./assets/IMG_20260306_141840.jpg";
-import skyLogo from "./assets/sky-logo.png";
-import tntLogo from "./assets/tnt-logo.png";
-import bbcLogo from "./assets/bbc-logo.png";
-import itvLogo from "./assets/itv-logo.png";
-import amazonLogo from "./assets/amazon-logo.png";
 
 const weekdayFixtures = [
   { id: 1, date: "2026-03-09", title: "Premier League", time: "12:30", channel: "Sky Sports Main Event", code: "SKY", dayType: "weekday" },
