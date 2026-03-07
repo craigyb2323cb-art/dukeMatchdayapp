@@ -731,4 +731,110 @@ const styles = {
   emptyLane: {
     marginTop: "14px",
     color: "#bdbdbd"
- 
+  },
+  laneFixtureCard: {
+    marginTop: "14px",
+    padding: "14px",
+    borderRadius: "14px",
+    background: "#252525"
+  },
+  laneFixtureSport: {
+    color: "#cfcfcf",
+    fontSize: "13px",
+    fontWeight: "700",
+    letterSpacing: "1px"
+  },
+  laneFixtureDate: {
+    marginTop: "4px",
+    color: "#cfcfcf",
+    fontSize: "14px",
+    fontWeight: "700"
+  },
+  laneFixtureTitle: {
+    marginTop: "4px",
+    fontSize: "18px",
+    fontWeight: "800"
+  },
+  laneFixtureChannel: {
+    marginTop: "4px",
+    color: "#d0d0d0"
+  },
+  laneBadgeRow: {
+    marginTop: "10px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap"
+  },
+  clearBoxButton: {
+    background: "#5d4037",
+    color: "white",
+    border: "none",
+    padding: "9px 12px",
+    borderRadius: "8px",
+    fontWeight: "700",
+    cursor: "pointer"
+  },
+  removeButton: {
+    marginTop: "12px",
+    background: "#8e2424",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    fontWeight: "700",
+    cursor: "pointer"
+  },
+  fanzoCard: {
+    background: "#1c1c1c",
+    borderRadius: "12px",
+    padding: "24px",
+    border: "1px solid #333"
+  },
+  fanzoText: {
+    color: "#d8d8d8"
+  },
+  openButton: {
+    background: "#1e88e5",
+    color: "white",
+    border: "none",
+    padding: "14px 20px",
+    borderRadius: "10px",
+    fontWeight: "700",
+    fontSize: "16px",
+    cursor: "pointer"
+  },
+  box1Button: {
+    background: "#1e88e5",
+    color: "white",
+    border: "none",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    fontWeight: "700",
+    fontSize: "15px",
+    cursor: "pointer"
+  },
+  box2Button: {
+    background: "#fb8c00",
+    color: "white",
+    border: "none",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    fontWeight: "700",
+    fontSize: "15px",
+    cursor: "pointer"
+  },
+  box3Button: {
+    background: "#43a047",
+    color: "white",
+    border: "none",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    fontWeight: "700",
+    fontSize: "15px",
+    cursor: "pointer"
+  },
+  sectionTitle: {
+    marginTop: 0
+  }
+};
