@@ -19,14 +19,14 @@ const weekendFixtures = [
   { id: 102, date: "2026-03-14", title: "Rugby Union", time: "14:00", channel: "ITV 1", code: "ITV", dayType: "weekend" },
   { id: 103, date: "2026-03-14", title: "Premier League 3pm", time: "15:00", channel: "Sky Sports Premier League", code: "SKY", dayType: "weekend" },
   { id: 104, date: "2026-03-14", title: "Championship Football", time: "17:30", channel: "TNT Sports 1", code: "TNT", dayType: "weekend" },
-  { id: 105, date: "2026-03-15", title: "Match of the Day Style Game", time: "19:45", channel: "BBC One", code: "BBC", dayType: "weekend" },
+  { id: 105, date: "2026-03-15", title: "BBC Live Football", time: "19:45", channel: "BBC One", code: "BBC", dayType: "weekend" },
   { id: 106, date: "2026-03-15", title: "Fight Night", time: "22:00", channel: "Amazon Prime", code: "AMAZON", dayType: "weekend" }
 ];
 
-const STORAGE_KEY = "duke-matchday-state-v3";
+const STORAGE_KEY = "duke-matchday-state-v4";
 
 export default function App() {
-  const [page, setPage] = useState("fixtures");
+  const [page, setPage] = useState("planner");
   const [fixtureMode, setFixtureMode] = useState("weekday");
 
   const [unassigned, setUnassigned] = useState({
@@ -44,7 +44,7 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      setPage(parsed.page || "fixtures");
+      setPage(parsed.page || "planner");
       setFixtureMode(parsed.fixtureMode || "weekday");
       setUnassigned(parsed.unassigned || { weekday: weekdayFixtures, weekend: weekendFixtures });
       setSchedule(parsed.schedule || { box1: [], box2: [], box3: [] });
@@ -85,15 +85,12 @@ export default function App() {
   }
 
   function assignFixture(boxKey, fixture) {
-    setSchedule((prev) => {
-      const next = {
-        ...prev,
-        [boxKey]: [...prev[boxKey], fixture].sort((a, b) =>
-          `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
-        )
-      };
-      return next;
-    });
+    setSchedule((prev) => ({
+      ...prev,
+      [boxKey]: [...prev[boxKey], fixture].sort((a, b) =>
+        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
+      )
+    }));
 
     setUnassigned((prev) => ({
       ...prev,
@@ -115,18 +112,6 @@ export default function App() {
     }));
   }
 
-  function resetAll() {
-    setUnassigned({
-      weekday: weekdayFixtures,
-      weekend: weekendFixtures
-    });
-    setSchedule({
-      box1: [],
-      box2: [],
-      box3: []
-    });
-  }
-
   function clearBox(boxKey) {
     const fixturesToReturn = schedule[boxKey];
 
@@ -146,8 +131,16 @@ export default function App() {
     });
   }
 
-  function openFanzoFixtures() {
-    window.open("https://business.fanzo.com/fixtures", "_blank");
+  function resetAll() {
+    setUnassigned({
+      weekday: weekdayFixtures,
+      weekend: weekendFixtures
+    });
+    setSchedule({
+      box1: [],
+      box2: [],
+      box3: []
+    });
   }
 
   function autoAssignDay(dayType) {
@@ -177,145 +170,120 @@ export default function App() {
     }));
   }
 
+  function openFanzoFixtures() {
+    window.open("https://business.fanzo.com/fixtures", "_blank");
+  }
+
   const currentFixtures = useMemo(() => unassigned[fixtureMode], [unassigned, fixtureMode]);
 
   return (
     <div style={appShell}>
       <div style={heroHeader}>
         <img src={logo} alt="Duke of Devonshire logo" style={logoStyle} />
-        <div style={{ flex: 1 }}>
-          <div style={eyebrow}>WELCOME TO</div>
-          <h1 style={mainTitle}>The Duke Of Devonshire</h1>
-          <div style={subTitle}>Live Sport Schedule & Screen Planner</div>
+        <div>
+          <div style={eyebrow}>DUKE OF DEVONSHIRE</div>
+          <h1 style={mainTitle}>Sky Box Assignment Planner</h1>
+          <div style={subTitle}>Plan the full day across all 3 screens</div>
         </div>
       </div>
 
       <div style={{ padding: "20px" }}>
-        <div style={navRow}>
-          <button onClick={() => setPage("fixtures")} style={tabButton(page === "fixtures")}>Fixtures</button>
-          <button onClick={() => setPage("board")} style={tabButton(page === "board")}>Sky Box Board</button>
-          <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>FANZO Planner</button>
-          <button onClick={resetAll} style={resetButton}>Reset All</button>
+        <div style={topBar}>
+          <div style={navRow}>
+            <button onClick={() => setPage("planner")} style={tabButton(page === "planner")}>
+              Planner
+            </button>
+            <button onClick={() => setPage("fanzo")} style={tabButton(page === "fanzo")}>
+              FANZO Planner
+            </button>
+          </div>
+
+          <div style={navRow}>
+            <button onClick={() => setFixtureMode("weekday")} style={modeButton(fixtureMode === "weekday")}>
+              Weekday
+            </button>
+            <button onClick={() => setFixtureMode("weekend")} style={modeButton(fixtureMode === "weekend")}>
+              Weekend
+            </button>
+            <button onClick={() => autoAssignDay(fixtureMode)} style={autoAssignButton}>
+              Auto Assign
+            </button>
+            <button onClick={resetAll} style={resetButton}>
+              Reset All
+            </button>
+          </div>
         </div>
 
-        {page === "fixtures" && (
-          <div>
-            <h2 style={sectionTitle}>Assign Matches Across The Whole Day</h2>
-
-            <div style={modeRow}>
-              <button onClick={() => setFixtureMode("weekday")} style={modeButton(fixtureMode === "weekday")}>
-                Weekday
-              </button>
-              <button onClick={() => setFixtureMode("weekend")} style={modeButton(fixtureMode === "weekend")}>
-                Weekend
-              </button>
-              <button onClick={() => autoAssignDay(fixtureMode)} style={autoAssignButton}>
-                Auto Assign This {fixtureMode === "weekend" ? "Weekend" : "Day"}
-              </button>
-            </div>
-
-            <div style={helperCard}>
-              Matches stay saved after refresh. You can assign early games now and come back later to place the evening fixtures.
-            </div>
-
-            {currentFixtures.length === 0 && (
-              <div style={emptyCard}>
-                ✅ No unassigned {fixtureMode} fixtures left
+        {page === "planner" && (
+          <>
+            <div style={plannerIntro}>
+              <div style={plannerIntroTitle}>Unassigned Fixtures</div>
+              <div style={plannerIntroText}>
+                Add each match to Sky Box 1, 2 or 3. Fixtures stay saved and can be scheduled for later in the day.
               </div>
-            )}
-
-            {currentFixtures.map((fixture) => {
-              const channel = getChannelInfo(fixture.code);
-
-              return (
-                <div
-                  key={fixture.id}
-                  style={{
-                    ...fixtureCard,
-                    borderLeft: `6px solid ${channel.border}`
-                  }}
-                >
-                  <div style={fixtureTopRow}>
-                    <div>
-                      <div style={fixtureTitle}>{fixture.title}</div>
-                      <div style={fixtureMeta}>
-                        {formatDate(fixture.date)} • {fixture.time}
-                      </div>
-                      <div style={fixtureMeta}>{fixture.channel}</div>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                      {channel.logo && (
-                        <img
-                          src={channel.logo}
-                          alt={`${channel.label} logo`}
-                          style={channelLogoSmall}
-                        />
-                      )}
-                      <ChannelBadge code={fixture.code} />
-                    </div>
-                  </div>
-
-                  <div style={buttonRow}>
-                    <button style={box1Button} onClick={() => assignFixture("box1", fixture)}>📺 SKY BOX 1</button>
-                    <button style={box2Button} onClick={() => assignFixture("box2", fixture)}>📺 SKY BOX 2</button>
-                    <button style={box3Button} onClick={() => assignFixture("box3", fixture)}>📺 SKY BOX 3</button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {page === "board" && (
-          <div>
-            <h2 style={sectionTitle}>Full Day Sky Box Allocation</h2>
-
-            <div style={boardGrid}>
-              <SkyBoxColumn
-                title="📺 SKY BOX 1"
-                fixtures={schedule.box1}
-                color="#1e88e5"
-                getChannelInfo={getChannelInfo}
-                formatDate={formatDate}
-                onRemove={(fixture) => removeFromBox("box1", fixture)}
-                onClear={() => clearBox("box1")}
-              />
-
-              <SkyBoxColumn
-                title="📺 SKY BOX 2"
-                fixtures={schedule.box2}
-                color="#fb8c00"
-                getChannelInfo={getChannelInfo}
-                formatDate={formatDate}
-                onRemove={(fixture) => removeFromBox("box2", fixture)}
-                onClear={() => clearBox("box2")}
-              />
-
-              <SkyBoxColumn
-                title="📺 SKY BOX 3"
-                fixtures={schedule.box3}
-                color="#43a047"
-                getChannelInfo={getChannelInfo}
-                formatDate={formatDate}
-                onRemove={(fixture) => removeFromBox("box3", fixture)}
-                onClear={() => clearBox("box3")}
-              />
             </div>
-          </div>
+
+            <div style={layoutGrid}>
+              <div style={leftColumn}>
+                {currentFixtures.length === 0 && (
+                  <div style={emptyCard}>✅ No unassigned {fixtureMode} fixtures left</div>
+                )}
+
+                {currentFixtures.map((fixture) => (
+                  <FixtureCard
+                    key={fixture.id}
+                    fixture={fixture}
+                    getChannelInfo={getChannelInfo}
+                    formatDate={formatDate}
+                    onAssign={assignFixture}
+                  />
+                ))}
+              </div>
+
+              <div style={rightColumn}>
+                <SkyBoxLane
+                  title="📺 SKY BOX 1"
+                  accent="#1e88e5"
+                  fixtures={schedule.box1}
+                  getChannelInfo={getChannelInfo}
+                  formatDate={formatDate}
+                  onRemove={(fixture) => removeFromBox("box1", fixture)}
+                  onClear={() => clearBox("box1")}
+                />
+
+                <SkyBoxLane
+                  title="📺 SKY BOX 2"
+                  accent="#fb8c00"
+                  fixtures={schedule.box2}
+                  getChannelInfo={getChannelInfo}
+                  formatDate={formatDate}
+                  onRemove={(fixture) => removeFromBox("box2", fixture)}
+                  onClear={() => clearBox("box2")}
+                />
+
+                <SkyBoxLane
+                  title="📺 SKY BOX 3"
+                  accent="#43a047"
+                  fixtures={schedule.box3}
+                  getChannelInfo={getChannelInfo}
+                  formatDate={formatDate}
+                  onRemove={(fixture) => removeFromBox("box3", fixture)}
+                  onClear={() => clearBox("box3")}
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {page === "fanzo" && (
-          <div>
-            <h2 style={sectionTitle}>FANZO Fixture Planner</h2>
-            <div style={plannerCard}>
-              <p style={{ marginTop: 0, fontSize: "18px", color: "#f1f1f1" }}>
-                Open the full FANZO fixture planner in a separate page.
-              </p>
-              <button onClick={openFanzoFixtures} style={openButton}>
-                Open FANZO Fixtures
-              </button>
-            </div>
+          <div style={fanzoCard}>
+            <h2 style={{ marginTop: 0 }}>FANZO Fixture Planner</h2>
+            <p style={{ color: "#d8d8d8" }}>
+              Open the full FANZO planner in a separate page.
+            </p>
+            <button onClick={openFanzoFixtures} style={openButton}>
+              Open FANZO Fixtures
+            </button>
           </div>
         )}
       </div>
@@ -323,59 +291,77 @@ export default function App() {
   );
 }
 
-function ChannelBadge({ code }) {
-  const label =
-    code === "SKY" ? "SKY" :
-    code === "TNT" ? "TNT" :
-    code === "BBC" ? "BBC" :
-    code === "ITV" ? "ITV" :
-    code === "AMAZON" ? "AMAZON" : "OTHER";
+function FixtureCard({ fixture, getChannelInfo, formatDate, onAssign }) {
+  const channel = getChannelInfo(fixture.code);
 
-  const bg =
-    code === "SKY" ? "#1565c0" :
-    code === "TNT" ? "#e65100" :
-    code === "BBC" ? "#6a1b9a" :
-    code === "ITV" ? "#2e7d32" :
-    code === "AMAZON" ? "#212121" : "#424242";
-
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        background: bg,
-        color: "white",
-        padding: "6px 10px",
-        borderRadius: "999px",
-        fontSize: "12px",
-        fontWeight: "800",
-        letterSpacing: "0.4px"
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
-function SkyBoxColumn({ title, fixtures, color, getChannelInfo, formatDate, onRemove, onClear }) {
   return (
     <div
       style={{
-        background: "#1c1c1c",
+        background: "#1b1b1b",
         borderRadius: "16px",
+        padding: "16px",
+        marginBottom: "16px",
+        borderLeft: `6px solid ${channel.border}`,
+        border: "1px solid #313131",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
+      }}
+    >
+      <div style={fixtureCardHeader}>
+        <div>
+          <div style={fixtureDate}>{formatDate(fixture.date)} • {fixture.time}</div>
+          <div style={fixtureTitle}>{fixture.title}</div>
+          <div style={fixtureChannelText}>{fixture.channel}</div>
+        </div>
+
+        <div style={channelWrap}>
+          {channel.logo && (
+            <img
+              src={channel.logo}
+              alt={`${channel.label} logo`}
+              style={channelLogoSmall}
+            />
+          )}
+          <span style={{ ...channelBadge, background: channel.bg }}>
+            {channel.label}
+          </span>
+        </div>
+      </div>
+
+      <div style={assignButtonRow}>
+        <button style={box1Button} onClick={() => onAssign("box1", fixture)}>
+          Add to Box 1
+        </button>
+        <button style={box2Button} onClick={() => onAssign("box2", fixture)}>
+          Add to Box 2
+        </button>
+        <button style={box3Button} onClick={() => onAssign("box3", fixture)}>
+          Add to Box 3
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SkyBoxLane({ title, accent, fixtures, getChannelInfo, formatDate, onRemove, onClear }) {
+  return (
+    <div
+      style={{
+        background: "#171717",
+        borderRadius: "18px",
         padding: "18px",
-        borderTop: `6px solid ${color}`,
-        minHeight: "220px",
+        borderTop: `6px solid ${accent}`,
         boxShadow: "0 10px 28px rgba(0,0,0,0.28)"
       }}
     >
-      <div style={boardTitle}>{title}</div>
-
-      <button onClick={onClear} style={clearBoxButton}>
-        Clear Box
-      </button>
+      <div style={laneHeader}>
+        <div style={laneTitle}>{title}</div>
+        <button onClick={onClear} style={clearBoxButton}>
+          Clear
+        </button>
+      </div>
 
       {fixtures.length === 0 && (
-        <div style={{ color: "#bdbdbd", marginTop: "14px" }}>No matches assigned</div>
+        <div style={emptyLane}>No matches assigned</div>
       )}
 
       {fixtures.map((fixture) => {
@@ -387,25 +373,16 @@ function SkyBoxColumn({ title, fixtures, color, getChannelInfo, formatDate, onRe
             style={{
               marginTop: "14px",
               padding: "14px",
-              borderRadius: "12px",
+              borderRadius: "14px",
               background: "#252525",
               borderLeft: `5px solid ${channel.border}`
             }}
           >
-            <div style={{ fontWeight: "800", fontSize: "16px", color: "#cfcfcf" }}>
-              {formatDate(fixture.date)}
-            </div>
-            <div style={{ fontWeight: "800", fontSize: "18px", marginTop: "4px" }}>
-              {fixture.time}
-            </div>
-            <div style={{ marginTop: "4px", fontSize: "17px", fontWeight: "700" }}>
-              {fixture.title}
-            </div>
-            <div style={{ marginTop: "4px", color: "#d0d0d0" }}>
-              {fixture.channel}
-            </div>
+            <div style={laneFixtureDate}>{formatDate(fixture.date)} • {fixture.time}</div>
+            <div style={laneFixtureTitle}>{fixture.title}</div>
+            <div style={laneFixtureChannel}>{fixture.channel}</div>
 
-            <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div style={laneBadgeRow}>
               {channel.logo && (
                 <img
                   src={channel.logo}
@@ -413,26 +390,14 @@ function SkyBoxColumn({ title, fixtures, color, getChannelInfo, formatDate, onRe
                   style={channelLogoSmall}
                 />
               )}
-              <span
-                style={{
-                  display: "inline-block",
-                  background: channel.bg,
-                  color: "white",
-                  padding: "6px 10px",
-                  borderRadius: "999px",
-                  fontSize: "12px",
-                  fontWeight: "800"
-                }}
-              >
+              <span style={{ ...channelBadge, background: channel.bg }}>
                 {channel.label}
               </span>
             </div>
 
-            <div style={{ marginTop: "10px" }}>
-              <button onClick={() => onRemove(fixture)} style={removeButton}>
-                Remove
-              </button>
-            </div>
+            <button onClick={() => onRemove(fixture)} style={removeButton}>
+              Remove
+            </button>
           </div>
         );
       })}
@@ -444,7 +409,7 @@ const appShell = {
   background: "linear-gradient(180deg, #0d0d0d 0%, #171717 45%, #111111 100%)",
   minHeight: "100vh",
   color: "white",
-  fontFamily: "'Arial Black', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+  fontFamily: "'Segoe UI', Arial, sans-serif"
 };
 
 const heroHeader = {
@@ -475,23 +440,28 @@ const eyebrow = {
 
 const mainTitle = {
   margin: "4px 0",
-  fontSize: "32px",
+  fontSize: "30px",
   lineHeight: "1.1"
 };
 
 const subTitle = {
-  color: "#e0e0e0",
-  fontSize: "16px",
-  fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: "1px"
+  color: "#d7d7d7",
+  fontSize: "15px",
+  fontWeight: "600"
+};
+
+const topBar = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "14px",
+  flexWrap: "wrap",
+  marginBottom: "20px"
 };
 
 const navRow = {
   display: "flex",
   gap: "10px",
-  flexWrap: "wrap",
-  marginBottom: "20px"
+  flexWrap: "wrap"
 };
 
 const tabButton = (active) => ({
@@ -500,108 +470,10 @@ const tabButton = (active) => ({
   border: "none",
   padding: "12px 16px",
   borderRadius: "10px",
-  fontWeight: "800",
+  fontWeight: "700",
   fontSize: "15px",
   cursor: "pointer"
 });
-
-const resetButton = {
-  background: "#b71c1c",
-  color: "white",
-  border: "none",
-  padding: "12px 16px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  fontSize: "15px",
-  cursor: "pointer"
-};
-
-const autoAssignButton = {
-  background: "#7b1fa2",
-  color: "white",
-  border: "none",
-  padding: "12px 16px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  fontSize: "15px",
-  cursor: "pointer"
-};
-
-const openButton = {
-  background: "#1e88e5",
-  color: "white",
-  border: "none",
-  padding: "14px 20px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  fontSize: "16px",
-  cursor: "pointer"
-};
-
-const clearBoxButton = {
-  background: "#5d4037",
-  color: "white",
-  border: "none",
-  padding: "10px 14px",
-  borderRadius: "8px",
-  fontWeight: "700",
-  cursor: "pointer"
-};
-
-const removeButton = {
-  background: "#8e2424",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "8px",
-  fontWeight: "700",
-  cursor: "pointer"
-};
-
-const box1Button = {
-  background: "#1e88e5",
-  color: "white",
-  border: "none",
-  padding: "14px 18px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  fontSize: "16px",
-  cursor: "pointer"
-};
-
-const box2Button = {
-  background: "#fb8c00",
-  color: "white",
-  border: "none",
-  padding: "14px 18px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  fontSize: "16px",
-  cursor: "pointer"
-};
-
-const box3Button = {
-  background: "#43a047",
-  color: "white",
-  border: "none",
-  padding: "14px 18px",
-  borderRadius: "10px",
-  fontWeight: "800",
-  fontSize: "16px",
-  cursor: "pointer"
-};
-
-const sectionTitle = {
-  marginBottom: "16px",
-  fontSize: "28px"
-};
-
-const modeRow = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap",
-  marginBottom: "16px"
-};
 
 const modeButton = (active) => ({
   background: active ? "#1565c0" : "#2b2b2b",
@@ -609,17 +481,65 @@ const modeButton = (active) => ({
   border: "none",
   padding: "12px 16px",
   borderRadius: "10px",
-  fontWeight: "800",
+  fontWeight: "700",
+  fontSize: "15px",
   cursor: "pointer"
 });
 
-const helperCard = {
+const autoAssignButton = {
+  background: "#7b1fa2",
+  color: "white",
+  border: "none",
+  padding: "12px 16px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "15px",
+  cursor: "pointer"
+};
+
+const resetButton = {
+  background: "#b71c1c",
+  color: "white",
+  border: "none",
+  padding: "12px 16px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "15px",
+  cursor: "pointer"
+};
+
+const plannerIntro = {
   background: "#171717",
   border: "1px solid #2d2d2d",
   borderRadius: "14px",
   padding: "16px",
-  marginBottom: "16px",
-  color: "#d0d0d0"
+  marginBottom: "18px"
+};
+
+const plannerIntroTitle = {
+  fontWeight: "800",
+  fontSize: "18px",
+  marginBottom: "6px"
+};
+
+const plannerIntroText = {
+  color: "#c7c7c7"
+};
+
+const layoutGrid = {
+  display: "grid",
+  gridTemplateColumns: "minmax(320px, 1fr) minmax(320px, 1.4fr)",
+  gap: "20px"
+};
+
+const leftColumn = {
+  minWidth: 0
+};
+
+const rightColumn = {
+  display: "grid",
+  gap: "16px",
+  minWidth: 0
 };
 
 const emptyCard = {
@@ -631,59 +551,161 @@ const emptyCard = {
   border: "1px solid #2f2f2f"
 };
 
-const fixtureCard = {
-  marginBottom: "16px",
-  padding: "16px",
-  background: "#1b1b1b",
-  borderRadius: "14px",
-  borderTop: "1px solid #313131",
-  borderRight: "1px solid #313131",
-  borderBottom: "1px solid #313131",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
-};
-
-const fixtureTopRow = {
+const fixtureCardHeader = {
   display: "flex",
-  alignItems: "center",
   justifyContent: "space-between",
   gap: "12px",
-  flexWrap: "wrap"
+  flexWrap: "wrap",
+  alignItems: "flex-start"
+};
+
+const fixtureDate = {
+  color: "#c0c0c0",
+  fontSize: "14px",
+  marginBottom: "4px",
+  fontWeight: "600"
 };
 
 const fixtureTitle = {
-  fontSize: "19px",
-  fontWeight: "800"
+  fontSize: "21px",
+  fontWeight: "800",
+  lineHeight: "1.2"
 };
 
-const fixtureMeta = {
+const fixtureChannelText = {
   color: "#d0d0d0",
   marginTop: "4px"
 };
 
-const buttonRow = {
+const channelWrap = {
   display: "flex",
-  gap: "12px",
-  flexWrap: "wrap",
-  marginTop: "14px"
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap"
 };
 
-const boardGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-  gap: "16px"
-};
-
-const boardTitle = {
-  fontSize: "22px",
+const channelBadge = {
+  display: "inline-block",
+  color: "white",
+  padding: "6px 10px",
+  borderRadius: "999px",
+  fontSize: "12px",
   fontWeight: "800",
-  marginBottom: "12px"
+  letterSpacing: "0.4px"
 };
 
-const plannerCard = {
-  background: "#1c1c1c",
-  borderRadius: "12px",
-  padding: "24px",
-  border: "1px solid #333"
+const assignButtonRow = {
+  display: "flex",
+  gap: "10px",
+  flexWrap: "wrap",
+  marginTop: "16px"
+};
+
+const laneHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "10px"
+};
+
+const laneTitle = {
+  fontSize: "22px",
+  fontWeight: "800"
+};
+
+const emptyLane = {
+  marginTop: "14px",
+  color: "#bdbdbd"
+};
+
+const laneFixtureDate = {
+  color: "#cfcfcf",
+  fontSize: "14px",
+  fontWeight: "700"
+};
+
+const laneFixtureTitle = {
+  marginTop: "4px",
+  fontSize: "18px",
+  fontWeight: "800"
+};
+
+const laneFixtureChannel = {
+  marginTop: "4px",
+  color: "#d0d0d0"
+};
+
+const laneBadgeRow = {
+  marginTop: "10px",
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap"
+};
+
+const clearBoxButton = {
+  background: "#5d4037",
+  color: "white",
+  border: "none",
+  padding: "9px 12px",
+  borderRadius: "8px",
+  fontWeight: "700",
+  cursor: "pointer"
+};
+
+const removeButton = {
+  marginTop: "12px",
+  background: "#8e2424",
+  color: "white",
+  border: "none",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  fontWeight: "700",
+  cursor: "pointer"
+};
+
+const openButton = {
+  background: "#1e88e5",
+  color: "white",
+  border: "none",
+  padding: "14px 20px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "16px",
+  cursor: "pointer"
+};
+
+const box1Button = {
+  background: "#1e88e5",
+  color: "white",
+  border: "none",
+  padding: "12px 16px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "15px",
+  cursor: "pointer"
+};
+
+const box2Button = {
+  background: "#fb8c00",
+  color: "white",
+  border: "none",
+  padding: "12px 16px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "15px",
+  cursor: "pointer"
+};
+
+const box3Button = {
+  background: "#43a047",
+  color: "white",
+  border: "none",
+  padding: "12px 16px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "15px",
+  cursor: "pointer"
 };
 
 const channelLogoSmall = {
@@ -694,4 +716,11 @@ const channelLogoSmall = {
   background: "#fff",
   padding: "4px 6px",
   borderRadius: "8px"
+};
+
+const fanzoCard = {
+  background: "#1c1c1c",
+  borderRadius: "12px",
+  padding: "24px",
+  border: "1px solid #333"
 };
